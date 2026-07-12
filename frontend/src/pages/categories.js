@@ -6,31 +6,46 @@ const PAGE_SIZE = 16
 export async function renderCategories() {
   const container = document.createElement('div')
   container.className = 'page-enter max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
-
   container.innerHTML = `
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-slate-800">Каталог товарів</h1>
-      <p class="text-slate-500 mt-2">Оберіть категорію для перегляду товарів</p>
+      <h1 class="text-3xl font-bold text-slate-800">Каталог категорій</h1>
+      <p class="text-slate-500 mt-2">Оберіть розділ для перегляду товарів</p>
     </div>
-    <div id="categories-grid">${loadingSpinner()}</div>
-    <div id="pagination-container" class="mt-8"></div>`
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <!-- Лівий сайдбар категорій -->
+      <aside class="lg:col-span-1 hidden lg:block" id="categories-sidebar"></aside>
+
+      <!-- Основний контент (сітка категорій) -->
+      <div class="lg:col-span-3">
+        <div id="categories-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          ${loadingSpinner()}
+        </div>
+        <div id="pagination-container" class="mt-8"></div>
+      </div>
+    </div>`
 
   try {
-    const categories = await api.getCategories()
+    const allCategories = await api.getCategories()
+    const rootIds = [1000001, 1000002, 1000003, 1000004, 1000005, 1000006, 1000007, 1000008, 1000009, 1000010, 1000011, 1000012, 1000013, 1000014, 1000015, 1000016, 1000017, 1000018, 1000019, 1000020]
+    let categories = allCategories.filter(c => rootIds.includes(Number(c.id)))
+    if (categories.length === 0) {
+      categories = allCategories
+    }
+
+    // Render left sidebar
+    const sidebarEl = container.querySelector('#categories-sidebar')
+    if (sidebarEl) {
+      sidebarEl.innerHTML = renderSidebarHtml(allCategories, null)
+    }
     
     function renderPage(page) {
       const grid = container.querySelector('#categories-grid')
       const paginationContainer = container.querySelector('#pagination-container')
-
-      if (!categories.length) {
-        grid.innerHTML = `<p class="text-center text-slate-500 py-16">Категорії не знайдено. Запустіть імпорт товарів на бекенді.</p>`
-        paginationContainer.innerHTML = ''
-        return
-      }
-
+      
       const total = categories.length
       const totalPages = Math.ceil(total / PAGE_SIZE)
-      
+
       if (page < 1) page = 1
       if (page > totalPages) page = totalPages
 
@@ -38,20 +53,16 @@ export async function renderCategories() {
       const end = start + PAGE_SIZE
       const pageCategories = categories.slice(start, end)
 
-      grid.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-        ${pageCategories.map((cat) => `
-          <a href="/category/${cat.id}-${slugify(cat.name)}" class="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
-            <div class="aspect-[4/3] bg-slate-100 overflow-hidden">
-              <img src="${escapeHtml(cat.image)}" alt="${escapeHtml(cat.name)}"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy"
-                onerror="this.src='https://placehold.co/400x300/f1f5f9/94a3b8?text=${encodeURIComponent(cat.name)}'" />
-            </div>
-            <div class="p-4">
-              <h3 class="font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">${escapeHtml(cat.name)}</h3>
-            </div>
-          </a>
-        `).join('')}
-      </div>`
+      grid.innerHTML = pageCategories.map((cat) => `
+        <a href="/category/${cat.id}-${slugify(cat.name)}" class="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all">
+          <div class="aspect-[4/3] bg-slate-100 overflow-hidden">
+            <img src="${escapeHtml(cat.image)}" alt="${escapeHtml(cat.name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+          </div>
+          <div class="p-4">
+            <h3 class="font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">${escapeHtml(cat.name)}</h3>
+          </div>
+        </a>
+      `).join('')
 
       if (totalPages <= 1) {
         paginationContainer.innerHTML = ''
@@ -154,13 +165,34 @@ export async function renderCategories() {
     const initialPage = parseInt(searchParams.get('page')) || 1
     renderPage(initialPage)
 
-  } catch (err) {
-    container.querySelector('#categories-grid').innerHTML =
-      `<div class="text-center py-16">
-        <p class="text-slate-500 mb-4">Не вдалося завантажити категорії</p>
-        <p class="text-sm text-slate-400">Переконайтесь, що бекенд запущений: <code class="bg-slate-100 px-2 py-1 rounded">http://localhost/course__udemy/backend/api/</code></p>
-      </div>`
+  } catch {
+    container.innerHTML = `<p class="text-center text-slate-500 py-16">Не вдалося завантажити категорії. Перевірте підключення до бекенду.</p>`
   }
 
   return container
+}
+
+function renderSidebarHtml(categoriesList, currentCategoryId) {
+  const rootIds = [1000001, 1000002, 1000003, 1000004, 1000005, 1000006, 1000007, 1000008, 1000009, 1000010, 1000011, 1000012, 1000013, 1000014, 1000015, 1000016, 1000017, 1000018, 1000019, 1000020]
+  let filtered = categoriesList.filter(c => rootIds.includes(Number(c.id)))
+  if (filtered.length === 0) {
+    filtered = categoriesList
+  }
+
+  return `
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <div>
+        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-3">Категорії</h3>
+        <ul class="space-y-1.5 pl-1">
+          ${filtered.map(c => `
+            <li>
+              <a href="/category/${c.id}-${slugify(c.name)}" 
+                class="group flex items-center justify-between text-xs font-semibold py-1 text-slate-600 hover:text-indigo-600 transition-colors ${c.id == currentCategoryId ? 'text-indigo-600 font-bold' : ''}">
+                <span>${escapeHtml(c.name)}</span>
+              </a>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+    </div>`
 }

@@ -6,11 +6,12 @@ export async function renderHome() {
   container.className = 'page-enter'
 
   container.innerHTML = `
+    <!-- Головний баннер (на всю ширину) -->
     <section class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div class="max-w-2xl">
           <h1 class="text-4xl md:text-5xl font-bold leading-tight">Все, що потрібно — в одному місці</h1>
-          <p class="mt-4 text-lg text-indigo-100">Понад 2000 товарів: електроніка, автоаксесуари, побутова техніка та багато іншого. Швидка доставка по Україні.</p>
+          <p class="mt-4 text-lg text-indigo-100 font-normal">Понад 2000 товарів: електроніка, автоаксесуари, побутова техніка та багато іншого. Швидка доставка по Україні.</p>
           <div class="mt-8 flex flex-wrap gap-4">
             <a href="/categories" class="inline-flex items-center px-6 py-3 bg-white text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors shadow-lg">
               Переглянути каталог
@@ -23,6 +24,7 @@ export async function renderHome() {
       </div>
     </section>
 
+    <!-- Блок категорій сіткою -->
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div class="flex items-center justify-between mb-8">
         <h2 class="text-2xl font-bold text-slate-800">Категорії</h2>
@@ -31,6 +33,7 @@ export async function renderHome() {
       <div id="home-categories">${loadingSpinner()}</div>
     </section>
 
+    <!-- Популярні товари -->
     <section class="bg-white border-y border-slate-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h2 class="text-2xl font-bold text-slate-800 mb-8">Популярні товари</h2>
@@ -38,6 +41,7 @@ export async function renderHome() {
       </div>
     </section>
 
+    <!-- Переваги магазину -->
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="bg-white rounded-2xl border border-slate-200 p-6 text-center">
@@ -67,9 +71,13 @@ export async function renderHome() {
 async function loadCategories(container) {
   const el = container.querySelector('#home-categories')
   try {
-    const categories = await api.getCategories()
+    const allCategories = await api.getCategories()
+    const rootIds = [1000001, 1000002, 1000003, 1000004, 1000005, 1000006, 1000007, 1000008, 1000009, 1000010, 1000011, 1000012, 1000013, 1000014, 1000015, 1000016, 1000017, 1000018, 1000019, 1000020]
+    let categories = allCategories.filter(c => rootIds.includes(Number(c.id)))
+    if (categories.length === 0) {
+      categories = allCategories
+    }
     const top = categories.slice(0, 8)
-
     el.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
       ${top.map((cat) => `
         <a href="/category/${cat.id}-${slugify(cat.name)}" class="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-md hover:border-indigo-200 transition-all">
@@ -81,7 +89,7 @@ async function loadCategories(container) {
         </a>
       `).join('')}
     </div>`
-  } catch {
+  } catch (err) {
     el.innerHTML = `<p class="text-center text-slate-500 py-8">Не вдалося завантажити категорії. Перевірте підключення до бекенду.</p>`
   }
 }
@@ -93,7 +101,7 @@ async function loadProducts(container) {
     const products = data.products?.slice(0, 8) || []
 
     if (products.length === 0) {
-      el.innerHTML = `<p class="text-center text-slate-500 py-8">Товари ще не додані. Запустіть імпорт на бекенді.</p>`
+      el.innerHTML = `<p class="text-center text-slate-500 py-8">Товари ще не додані. Запустіть импорт на бекенді.</p>`
       return
     }
 

@@ -7,6 +7,7 @@ export async function renderCategoryProducts(categoryId) {
   const container = document.createElement('div')
   container.className = 'page-enter max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'
 
+  // Rozetka layout structure
   container.innerHTML = `
     <nav class="text-sm text-slate-500 mb-6" id="breadcrumb">
       <a href="/" class="hover:text-indigo-600">Головна</a>
@@ -15,13 +16,36 @@ export async function renderCategoryProducts(categoryId) {
       <span class="mx-2">/</span>
       <span id="breadcrumb-name" class="text-slate-800">...</span>
     </nav>
-    <div id="category-header" class="mb-8">${loadingSpinner()}</div>
-    <div id="category-content">${loadingSpinner()}</div>
-    <div id="products-pagination-container" class="mt-8"></div>`
+    
+    <div id="category-header" class="mb-6">${loadingSpinner()}</div>
+
+    <!-- Мобільна кнопка фільтрів -->
+    <div class="lg:hidden flex items-center justify-between mb-4 bg-slate-50 border border-slate-200 rounded-xl p-3">
+      <span class="text-xs font-semibold text-slate-600">Фільтри та категорії</span>
+      <button type="button" id="toggle-mobile-filters" class="px-4 py-2 bg-indigo-600 text-white font-semibold text-xs rounded-lg shadow-sm hover:bg-indigo-700 transition-colors cursor-pointer">
+        Показати
+      </button>
+    </div>
+
+    <!-- Мобільний блок фільтрів (випадаючий) -->
+    <div id="mobile-filters-drawer" class="hidden lg:hidden mb-6"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <!-- Лівий сайдбар як на Розетка (десктоп) -->
+      <aside class="lg:col-span-1 hidden lg:block" id="catalog-sidebar"></aside>
+
+      <!-- Основний контент товарів -->
+      <div class="lg:col-span-3">
+        <div id="category-content">${loadingSpinner()}</div>
+        <div id="products-pagination-container" class="mt-8"></div>
+      </div>
+    </div>`
 
   try {
+    // 1. Fetch data
     const category = await api.getCategory(categoryId)
     const subcategories = category.subcategories || []
+    const categoriesList = await api.getCategories()
 
     container.querySelector('#breadcrumb-name').textContent = category.name
 
@@ -40,6 +64,31 @@ export async function renderCategoryProducts(categoryId) {
     const contentEl = container.querySelector('#category-content')
 
     if (subcategories.length > 0) {
+      const desktopSidebar = container.querySelector('#catalog-sidebar')
+      const mobileSidebar = container.querySelector('#mobile-filters-drawer')
+      
+      const simpleSidebarHtml = renderSubcategorySidebarHtml(categoriesList, categoryId)
+      if (desktopSidebar) desktopSidebar.innerHTML = simpleSidebarHtml
+      if (mobileSidebar) mobileSidebar.innerHTML = simpleSidebarHtml
+
+      // Add category count label
+      const headerCount = document.createElement('p')
+      headerCount.className = 'text-slate-500 mt-2'
+      headerCount.textContent = `${subcategories.length} підкатегорій`
+      container.querySelector('#category-header').appendChild(headerCount)
+
+      // Mobile Sidebar Toggle
+      container.querySelector('#toggle-mobile-filters')?.addEventListener('click', (e) => {
+        const isHidden = mobileSidebar.classList.contains('hidden')
+        if (isHidden) {
+          mobileSidebar.classList.remove('hidden')
+          e.target.textContent = 'Приховати'
+        } else {
+          mobileSidebar.classList.add('hidden')
+          e.target.textContent = 'Показати'
+        }
+      })
+
       contentEl.innerHTML = `
         <p class="text-slate-500 mb-6">Оберіть підкатегорію</p>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
@@ -55,6 +104,7 @@ export async function renderCategoryProducts(categoryId) {
           `).join('')}
         </div>`
       container.querySelector('#products-pagination-container').innerHTML = ''
+      container.querySelector('#toggle-mobile-filters')?.parentElement?.classList.add('hidden')
       return container
     }
 
@@ -65,25 +115,61 @@ export async function renderCategoryProducts(categoryId) {
       container.querySelector('#category-header').innerHTML += `
         <p class="text-slate-500 mt-2">0 товарів</p>`
       container.querySelector('#products-pagination-container').innerHTML = ''
+      container.querySelector('#toggle-mobile-filters')?.parentElement?.classList.add('hidden')
       return container
     }
 
-    const total = products.length
-    const totalPages = Math.ceil(total / PAGE_SIZE)
+    // Filter state
+    let activeMinPrice = null
+    let activeMaxPrice = null
+    let activeSuppliers = []
 
-    // Add count label under the title
+    // Build unique suppliers list
+    const uniqueSuppliers = [...new Set(products.map(p => p.supplier || 'Інші / Невідомо'))].filter(Boolean)
+
+    // Render Sidebars
+    const desktopSidebar = container.querySelector('#catalog-sidebar')
+    const mobileSidebar = container.querySelector('#mobile-filters-drawer')
+    
+    const sidebarHtml = renderSidebarHtml(categoriesList, uniqueSuppliers, categoryId)
+    desktopSidebar.innerHTML = sidebarHtml
+    mobileSidebar.innerHTML = sidebarHtml
+
+    // Add count label
     const headerCount = document.createElement('p')
     headerCount.className = 'text-slate-500 mt-2'
-    headerCount.textContent = `${total} товарів`
+    headerCount.textContent = `${products.length} товарів`
     container.querySelector('#category-header').appendChild(headerCount)
 
     function renderProductsPage(page) {
+      let filteredProducts = products
+
+      if (activeMinPrice !== null) {
+        filteredProducts = filteredProducts.filter(p => p.price >= activeMinPrice)
+      }
+      if (activeMaxPrice !== null) {
+        filteredProducts = filteredProducts.filter(p => p.price <= activeMaxPrice)
+      }
+      if (activeSuppliers.length > 0) {
+        filteredProducts = filteredProducts.filter(p => activeSuppliers.includes(p.supplier || 'Інші / Невідомо'))
+      }
+
+      const total = filteredProducts.length
+      const totalPages = Math.ceil(total / PAGE_SIZE)
+      headerCount.textContent = `${total} товарів`
+
       if (page < 1) page = 1
       if (page > totalPages) page = totalPages
 
       const start = (page - 1) * PAGE_SIZE
       const end = start + PAGE_SIZE
-      const pageProducts = products.slice(start, end)
+      const pageProducts = filteredProducts.slice(start, end)
+
+      if (!filteredProducts.length) {
+        contentEl.innerHTML = `<p class="text-center text-slate-500 py-16 font-normal">Не знайдено товарів за обраними фільтрами</p>`
+        container.querySelector('#products-pagination-container').innerHTML = ''
+        return
+      }
 
       contentEl.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         ${pageProducts.map((p) => productCard(p)).join('')}
@@ -188,6 +274,86 @@ export async function renderCategoryProducts(categoryId) {
       })
     }
 
+    // Bind filters handlers
+    const bindFilterEvents = (panel, isMobile = false) => {
+      const minInput = panel.querySelector('.price-min')
+      const maxInput = panel.querySelector('.price-max')
+      const applyBtn = panel.querySelector('.apply-btn')
+      const resetBtn = panel.querySelector('.reset-btn')
+
+      applyBtn?.addEventListener('click', () => {
+        activeMinPrice = minInput.value !== '' ? parseFloat(minInput.value) : null
+        activeMaxPrice = maxInput.value !== '' ? parseFloat(maxInput.value) : null
+        
+        activeSuppliers = []
+        panel.querySelectorAll('.supplier-cb:checked').forEach(cb => {
+          activeSuppliers.push(cb.getAttribute('data-supplier-name'))
+        })
+
+        // Sync values to the other panel
+        const otherPanel = isMobile ? desktopSidebar : mobileSidebar
+        if (otherPanel) {
+          const otherMin = otherPanel.querySelector('.price-min')
+          const otherMax = otherPanel.querySelector('.price-max')
+          if (otherMin) otherMin.value = minInput.value
+          if (otherMax) otherMax.value = maxInput.value
+          otherPanel.querySelectorAll('.supplier-cb').forEach(cb => {
+            const name = cb.getAttribute('data-supplier-name')
+            cb.checked = activeSuppliers.includes(name)
+          })
+        }
+
+        if (isMobile) {
+          mobileSidebar.classList.add('hidden')
+          container.querySelector('#toggle-mobile-filters').textContent = 'Показати'
+        }
+
+        renderProductsPage(1)
+      })
+
+      resetBtn?.addEventListener('click', () => {
+        activeMinPrice = null
+        activeMaxPrice = null
+        activeSuppliers = []
+        
+        minInput.value = ''
+        maxInput.value = ''
+        panel.querySelectorAll('.supplier-cb').forEach(cb => cb.checked = false)
+
+        // Sync values to the other panel
+        const otherPanel = isMobile ? desktopSidebar : mobileSidebar
+        if (otherPanel) {
+          const otherMin = otherPanel.querySelector('.price-min')
+          const otherMax = otherPanel.querySelector('.price-max')
+          if (otherMin) otherMin.value = ''
+          if (otherMax) otherMax.value = ''
+          otherPanel.querySelectorAll('.supplier-cb').forEach(cb => cb.checked = false)
+        }
+
+        if (isMobile) {
+          mobileSidebar.classList.add('hidden')
+          container.querySelector('#toggle-mobile-filters').textContent = 'Показати'
+        }
+
+        renderProductsPage(1)
+      })
+    }
+
+    bindFilterEvents(desktopSidebar, false)
+    bindFilterEvents(mobileSidebar, true)
+
+    // Mobile Sidebar Toggle
+    container.querySelector('#toggle-mobile-filters')?.addEventListener('click', (e) => {
+      const isHidden = mobileSidebar.classList.contains('hidden')
+      if (isHidden) {
+        mobileSidebar.classList.remove('hidden')
+        e.target.textContent = 'Приховати'
+      } else {
+        mobileSidebar.classList.add('hidden')
+        e.target.textContent = 'Показати'
+      }
+    })
+
     const searchParams = new URLSearchParams(window.location.search)
     const initialPage = parseInt(searchParams.get('page')) || 1
     renderProductsPage(initialPage)
@@ -201,4 +367,95 @@ export async function renderCategoryProducts(categoryId) {
   }
 
   return container
+}
+
+function renderSidebarHtml(categoriesList, uniqueSuppliers, currentCategoryId) {
+  const rootIds = [1000001, 1000002, 1000003, 1000004, 1000005, 1000006, 1000007, 1000008, 1000009, 1000010, 1000011, 1000012, 1000013, 1000014, 1000015, 1000016, 1000017, 1000018, 1000019, 1000020]
+  let filtered = categoriesList.filter(c => rootIds.includes(Number(c.id)))
+  if (filtered.length === 0) {
+    filtered = categoriesList
+  }
+
+  return `
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <!-- Категорії -->
+      <div>
+        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-3">Категорії</h3>
+        <ul class="space-y-1.5 pl-1">
+          ${filtered.map(c => `
+            <li>
+              <a href="/category/${c.id}-${slugify(c.name)}" 
+                class="group flex items-center justify-between text-xs font-semibold py-1 text-slate-600 hover:text-indigo-600 transition-colors ${c.id == currentCategoryId ? 'text-indigo-600 font-bold' : ''}">
+                <span>${escapeHtml(c.name)}</span>
+              </a>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+
+      <hr class="border-slate-200 my-4" />
+
+      <!-- Фільтрація за ціною -->
+      <div>
+        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-3">Ціна (₴)</h3>
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <input type="number" class="price-min w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:border-indigo-500 text-slate-700 font-normal outline-none transition-all" placeholder="Від ₴" />
+            <span class="text-slate-400 text-xs font-normal">—</span>
+            <input type="number" class="price-max w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:border-indigo-500 text-slate-700 font-normal outline-none transition-all" placeholder="До ₴" />
+          </div>
+          <button type="button" class="apply-btn w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm cursor-pointer">
+            ОК
+          </button>
+        </div>
+      </div>
+
+      ${uniqueSuppliers.length > 1 ? `
+        <hr class="border-slate-200 my-4" />
+        <!-- Постачальники -->
+        <div>
+          <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-3">Постачальник</h3>
+          <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+            ${uniqueSuppliers.map(s => `
+              <label class="flex items-center gap-2.5 text-xs text-slate-600 font-semibold cursor-pointer">
+                <input type="checkbox" data-supplier-name="${escapeHtml(s)}" class="supplier-cb w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" />
+                <span class="truncate">${escapeHtml(s)}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <hr class="border-slate-200 my-4" />
+
+      <!-- Скинути фільтри -->
+      <button type="button" class="reset-btn w-full py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold rounded-lg transition-colors cursor-pointer">
+        Скинути фільтри
+      </button>
+    </div>`
+}
+
+function renderSubcategorySidebarHtml(categoriesList, currentCategoryId) {
+  const rootIds = [1000001, 1000002, 1000003, 1000004, 1000005, 1000006, 1000007, 1000008, 1000009, 1000010, 1000011, 1000012, 1000013, 1000014, 1000015, 1000016, 1000017, 1000018, 1000019, 1000020]
+  let filtered = categoriesList.filter(c => rootIds.includes(Number(c.id)))
+  if (filtered.length === 0) {
+    filtered = categoriesList
+  }
+
+  return `
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <div>
+        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-3">Категорії</h3>
+        <ul class="space-y-1.5 pl-1">
+          ${filtered.map(c => `
+            <li>
+              <a href="/category/${c.id}-${slugify(c.name)}" 
+                class="group flex items-center justify-between text-xs font-semibold py-1 text-slate-600 hover:text-indigo-600 transition-colors ${c.id == currentCategoryId ? 'text-indigo-600 font-bold' : ''}">
+                <span>${escapeHtml(c.name)}</span>
+              </a>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+    </div>`
 }

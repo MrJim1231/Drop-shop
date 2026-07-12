@@ -15,6 +15,7 @@ header('Content-Type: text/html; charset=utf-8');
 
 require_once __DIR__ . '/SimpleXlsxReader.php';
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/category_helpers.php';
 
 $startedAt = microtime(true);
 $isReset = isset($_GET['reset']);
@@ -32,6 +33,14 @@ $mysqli->set_charset('utf8mb4');
 
 if ($mysqli->connect_error) {
     die('<p class="err">Помилка підключення до БД: ' . htmlspecialchars($mysqli->connect_error) . '</p></body></html>');
+}
+
+// Записуємо 20 зумовлених базових категорій
+foreach ($predefinedRoots as $rootId => $rootName) {
+    $stmt = $mysqli->prepare('INSERT INTO categories (id, name, parent_id) VALUES (?, ?, NULL) ON DUPLICATE KEY UPDATE name = VALUES(name)');
+    $stmt->bind_param('is', $rootId, $rootName);
+    $stmt->execute();
+    $stmt->close();
 }
 
 $fileName = isset($_GET['file']) ? $_GET['file'] : 'catalog_dropt_2026-07-12.xlsx';
@@ -350,6 +359,13 @@ function resolveCategoryPath(
 
     if ($parts === []) {
         throw new RuntimeException('Порожній шлях категорії');
+    }
+
+    global $predefinedRoots;
+    $firstPart = $parts[0];
+    if (!in_array($firstPart, $predefinedRoots, true)) {
+        $rootName = getRootCategoryName($categoryPath);
+        array_unshift($parts, $rootName);
     }
 
     $parentId = null;

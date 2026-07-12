@@ -1,5 +1,9 @@
 import { cartStore } from '../store/cart.js'
 import { authStore } from '../store/auth.js'
+import { api } from '../api/client.js'
+import { escapeHtml, slugify } from '../utils.js'
+
+let categoriesCache = null
 
 export function renderHeader() {
   const cartCount = cartStore.getCount()
@@ -9,10 +13,18 @@ export function renderHeader() {
     <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
-          <a href="/" class="flex items-center gap-2 group flex-shrink-0">
-            <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg group-hover:bg-indigo-700 transition-colors">D</div>
-            <span class="font-bold text-xl text-slate-800 hidden sm:block">DropShop</span>
-          </a>
+          <div class="flex items-center gap-4">
+            <a href="/" class="flex items-center gap-2 group flex-shrink-0">
+              <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg group-hover:bg-indigo-700 transition-colors">D</div>
+              <span class="font-bold text-xl text-slate-800 hidden sm:block">DropShop</span>
+            </a>
+
+            <!-- Кнопка Каталог (як на Розетка) -->
+            <button type="button" id="catalog-drawer-btn" class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
+              <span>☰</span>
+              <span>Каталог</span>
+            </button>
+          </div>
 
           <!-- Пошук товарів (десктоп) -->
           <div class="flex-1 max-w-md mx-8 hidden md:block">
@@ -80,12 +92,108 @@ export function renderHeader() {
           </nav>
         </div>
       </div>
-    </header>`
+    </header>
+
+    <!-- Висувний Сайдбар Каталогу (як на Розетка) -->
+    <div id="catalog-drawer-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden transition-opacity duration-300 opacity-0">
+      <div id="catalog-drawer" class="fixed inset-y-0 left-0 w-80 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out p-6 flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+          <h3 class="font-bold text-slate-800 text-lg">Каталог товарів</h3>
+          <button type="button" id="close-drawer-btn" class="text-slate-400 hover:text-slate-600 text-2xl font-bold p-1 cursor-pointer">✕</button>
+        </div>
+        <div class="flex-1 overflow-y-auto pr-1" id="drawer-categories-list">
+          <div class="flex justify-center py-12">
+            <div class="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </div>
+    </div>`
 }
 
 export function bindHeaderEvents() {
+  const overlay = document.getElementById('catalog-drawer-overlay')
+  const drawer = document.getElementById('catalog-drawer')
+  const drawerBtn = document.getElementById('catalog-drawer-btn')
+  const closeBtn = document.getElementById('close-drawer-btn')
+  const categoriesListEl = document.getElementById('drawer-categories-list')
+
   document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
     document.getElementById('mobile-menu')?.classList.toggle('hidden')
+  })
+
+  // Open Drawer logic
+  const openDrawer = async () => {
+    if (!overlay || !drawer) return
+
+    overlay.classList.remove('hidden')
+    // Wait a tick for CSS displays to apply, then transition opacity & transform
+    setTimeout(() => {
+      overlay.classList.remove('opacity-0')
+      overlay.classList.add('opacity-100')
+      drawer.classList.remove('-translate-x-full')
+      drawer.classList.add('translate-x-0')
+    }, 10)
+
+    // Load categories from API if not cached
+    if (!categoriesCache && categoriesListEl) {
+      try {
+        const categories = await api.getCategories()
+        categoriesCache = categories
+        renderDrawerCategories(categories)
+      } catch (err) {
+        categoriesListEl.innerHTML = `<p class="text-xs text-slate-400 font-normal">Помилка завантаження категорій</p>`
+      }
+    } else if (categoriesCache) {
+      renderDrawerCategories(categoriesCache)
+    }
+  }
+
+  // Close Drawer logic
+  const closeDrawer = () => {
+    if (!overlay || !drawer) return
+
+    overlay.classList.remove('opacity-100')
+    overlay.classList.add('opacity-0')
+    drawer.classList.remove('translate-x-0')
+    drawer.classList.add('-translate-x-full')
+
+    // Wait for animation to finish before adding hidden class
+    setTimeout(() => {
+      overlay.classList.add('hidden')
+    }, 300)
+  }
+
+  function renderDrawerCategories(categories) {
+    if (!categoriesListEl) return
+    
+    const rootIds = [1000001, 1000002, 1000003, 1000004, 1000005, 1000006, 1000007, 1000008, 1000009, 1000010, 1000011, 1000012, 1000013, 1000014, 1000015, 1000016, 1000017, 1000018, 1000019, 1000020]
+    let filtered = categories.filter(c => rootIds.includes(Number(c.id)))
+    if (filtered.length === 0) {
+      filtered = categories
+    }
+
+    categoriesListEl.innerHTML = `
+      <ul class="space-y-1">
+        ${filtered.map((cat) => `
+          <li>
+            <a href="/category/${cat.id}-${slugify(cat.name)}" class="drawer-link flex items-center gap-3 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-xl transition-all">
+              <span>📁</span>
+              <span class="truncate">${escapeHtml(cat.name)}</span>
+            </a>
+          </li>
+        `).join('')}
+      </ul>`
+
+    // Bind link click to close drawer
+    categoriesListEl.querySelectorAll('.drawer-link').forEach(link => {
+      link.addEventListener('click', closeDrawer)
+    })
+  }
+
+  drawerBtn?.addEventListener('click', openDrawer)
+  closeBtn?.addEventListener('click', closeDrawer)
+  overlay?.addEventListener('click', (e) => {
+    if (e.target === overlay) closeDrawer()
   })
 
   const logout = () => {

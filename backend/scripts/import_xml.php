@@ -13,6 +13,7 @@ ini_set('memory_limit', '512M');
 header('Content-Type: text/html; charset=utf-8');
 
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/category_helpers.php';
 
 $startedAt = microtime(true);
 $isReset = isset($_GET['reset']);
@@ -43,6 +44,14 @@ $mysqli->set_charset('utf8mb4');
 
 if ($mysqli->connect_error) {
     die('<p class="err">Помилка підключення до БД: ' . htmlspecialchars($mysqli->connect_error) . '</p></body></html>');
+}
+
+// Записуємо 20 зумовлених базових категорій
+foreach ($predefinedRoots as $rootId => $rootName) {
+    $stmt = $mysqli->prepare('INSERT INTO categories (id, name, parent_id) VALUES (?, ?, NULL) ON DUPLICATE KEY UPDATE name = VALUES(name)');
+    $stmt->bind_param('is', $rootId, $rootName);
+    $stmt->execute();
+    $stmt->close();
 }
 
 if ($isReset) {
@@ -109,6 +118,18 @@ foreach ($categories as $cat) {
     }
     
     $name = trim((string)$cat);
+
+    if ($parentId === null || $parentId === 0) {
+        $rootGroup = getRootCategoryName($name);
+        $rootId = 1000020; // Інші товари за замовчуванням
+        foreach ($predefinedRoots as $rid => $rname) {
+            if ($rname === $rootGroup) {
+                $rootId = $rid;
+                break;
+            }
+        }
+        $parentId = $rootId;
+    }
     
     $stmtCat->bind_param('isi', $id, $name, $parentId);
     $stmtCat->execute();
