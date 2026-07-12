@@ -25,6 +25,17 @@ $password = trim($data['password']);
 // Перевіряємо, чи передано userId, якщо ні - генеруємо новий
 $user_id = isset($data['userId']) ? $data['userId'] : uniqid();
 
+// Якщо userId вже зайнятий іншим користувачем, генеруємо новий унікальний
+$sql_user_check = "SELECT id FROM users WHERE id = ?";
+$stmt_user_check = $conn->prepare($sql_user_check);
+$stmt_user_check->bind_param("s", $user_id);
+$stmt_user_check->execute();
+$stmt_user_check->store_result();
+if ($stmt_user_check->num_rows > 0) {
+    $user_id = uniqid();
+}
+$stmt_user_check->close();
+
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     echo json_encode(["status" => "error", "message" => "Некоректний email"]);
     exit();

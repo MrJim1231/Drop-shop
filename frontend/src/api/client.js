@@ -14,14 +14,18 @@ async function request(endpoint, options = {}) {
   let data
   try {
     data = JSON.parse(text)
-  } catch {
+  } catch (err) {
     const jsonStart = text.indexOf('{')
     const arrayStart = text.indexOf('[')
     const start = jsonStart === -1 ? arrayStart : arrayStart === -1 ? jsonStart : Math.min(jsonStart, arrayStart)
     if (start === -1) {
-      throw new Error('Помилка сервера')
+      throw new Error('Помилка сервера: ' + text.slice(0, 200))
     }
-    data = JSON.parse(text.slice(start))
+    try {
+      data = JSON.parse(text.slice(start))
+    } catch (parseErr) {
+      throw new Error(`JSON Parse Error: ${parseErr.message}. Raw text: ${text.slice(0, 200)}`)
+    }
   }
 
   if (!response.ok) {
