@@ -1,5 +1,7 @@
 import { api } from '../api/client.js'
 import { cartStore } from '../store/cart.js'
+import { authStore } from '../store/auth.js'
+import { navigateTo } from '../router.js'
 import { formatPrice, escapeHtml, showToast } from '../utils.js'
 
 export function renderCart() {
@@ -156,11 +158,20 @@ function bindCartEvents(container) {
       })
 
       if (result.status === 'success') {
-        cartStore.clear()
         cartStore.setUserId(result.userId)
         showToast('Замовлення оформлено! Перевірте email.')
-        window.history.pushState(null, '', '/orders')
-        window.dispatchEvent(new PopStateEvent('popstate'))
+        
+        // Redirect to /orders first
+        if (authStore.isLoggedIn()) {
+          navigateTo('/orders')
+        } else {
+          navigateTo('/orders')
+        }
+
+        // Clear cart after redirect has started to avoid routing race conditions
+        setTimeout(() => {
+          cartStore.clear()
+        }, 100)
       } else {
         showToast(result.message || 'Помилка оформлення', 'error')
       }
