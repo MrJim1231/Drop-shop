@@ -18,9 +18,14 @@ const routes = {
   '/orders': () => renderOrders(),
 }
 
-function parseHash() {
-  const hash = window.location.hash.slice(1) || '/'
-  const parts = hash.split('/').filter(Boolean)
+export function navigateTo(path) {
+  window.history.pushState(null, '', path)
+  navigate()
+}
+
+function parsePath() {
+  const pathName = window.location.pathname || '/'
+  const parts = pathName.split('/').filter(Boolean)
 
   if (parts.length === 0) return { path: '/', params: {} }
 
@@ -42,7 +47,7 @@ export async function navigate() {
   isNavigating = true
 
   const app = document.getElementById('app')
-  const { path, params } = parseHash()
+  const { path, params } = parsePath()
   const handler = routes[path]
 
   app.innerHTML = `
@@ -77,18 +82,25 @@ function notFoundPage() {
   div.innerHTML = `
     <h1 class="text-4xl font-bold text-slate-800">404</h1>
     <p class="text-slate-500 mt-2 mb-8">Сторінку не знайдено</p>
-    <a href="#/" class="text-indigo-600 hover:text-indigo-700 font-medium">На головну</a>`
+    <a href="/" class="text-indigo-600 hover:text-indigo-700 font-medium">На головну</a>`
   return div
 }
 
 export function initRouter() {
-  window.addEventListener('hashchange', navigate)
+  window.addEventListener('popstate', navigate)
   window.addEventListener('cart-updated', navigate)
   window.addEventListener('auth-updated', navigate)
 
-  if (!window.location.hash) {
-    window.location.hash = '#/'
-  } else {
-    navigate()
-  }
+  document.body.addEventListener('click', (e) => {
+    const link = e.target.closest('a')
+    if (link) {
+      const href = link.getAttribute('href')
+      if (href && href.startsWith('/') && !href.startsWith('//')) {
+        e.preventDefault()
+        navigateTo(href)
+      }
+    }
+  })
+
+  navigate()
 }

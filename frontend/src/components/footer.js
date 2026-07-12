@@ -13,9 +13,9 @@ export function renderFooter() {
           <div>
             <h4 class="font-semibold text-white mb-4">Навігація</h4>
             <ul class="space-y-2 text-sm">
-              <li><a href="#/" class="hover:text-white transition-colors">Головна</a></li>
-              <li><a href="#/categories" class="hover:text-white transition-colors">Каталог</a></li>
-              <li><a href="#/cart" class="hover:text-white transition-colors">Кошик</a></li>
+              <li><a href="/" class="hover:text-white transition-colors">Головна</a></li>
+              <li><a href="/categories" class="hover:text-white transition-colors">Каталог</a></li>
+              <li><a href="/cart" class="hover:text-white transition-colors">Кошик</a></li>
             </ul>
           </div>
           <div>

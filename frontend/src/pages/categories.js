@@ -23,7 +23,7 @@ export async function renderCategories() {
 
     grid.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       ${categories.map((cat) => `
-        <a href="#/category/${cat.id}" class="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
+        <a href="/category/${cat.id}" class="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
           <div class="aspect-[4/3] bg-slate-100 overflow-hidden">
             <img src="${escapeHtml(cat.image)}" alt="${escapeHtml(cat.name)}"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy"

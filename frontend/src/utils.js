@@ -46,7 +46,7 @@ export function loadingSpinner() {
   </div>`
 }
 
-export function productCard(product, linkPrefix = '#/product/') {
+export function productCard(product, linkPrefix = '/product/') {
   const image =
     product.images?.[0] ||
     product.image ||

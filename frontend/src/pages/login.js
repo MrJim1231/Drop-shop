@@ -73,7 +73,8 @@ export function renderLogin() {
           if (result.status === 'success') {
             authStore.login(result.token, result.userId)
             showToast('Email підтверджено!')
-            window.location.hash = '#/'
+            window.history.pushState(null, '', '/')
+            window.dispatchEvent(new PopStateEvent('popstate'))
           } else {
             showToast(result.message || 'Невірний код', 'error')
           }
@@ -82,7 +83,8 @@ export function renderLogin() {
           if (result.status === 'success') {
             authStore.login(result.token, result.userId)
             showToast('Вітаємо!')
-            window.location.hash = '#/'
+            window.history.pushState(null, '', '/')
+            window.dispatchEvent(new PopStateEvent('popstate'))
           } else if (result.status === 'verification_required') {
             pendingEmail = fd.get('email')
             mode = 'verify'

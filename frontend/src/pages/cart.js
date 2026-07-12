@@ -15,7 +15,7 @@ export function renderCart() {
         <div class="text-6xl mb-4">🛒</div>
         <h1 class="text-2xl font-bold text-slate-800">Кошик порожній</h1>
         <p class="text-slate-500 mt-2 mb-8">Додайте товари з каталогу</p>
-        <a href="#/categories" class="inline-flex px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
+        <a href="/categories" class="inline-flex px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
           Перейти до каталогу
         </a>
       </div>`
@@ -159,7 +159,8 @@ function bindCartEvents(container) {
         cartStore.clear()
         cartStore.setUserId(result.userId)
         showToast('Замовлення оформлено! Перевірте email.')
-        window.location.hash = '#/orders'
+        window.history.pushState(null, '', '/orders')
+        window.dispatchEvent(new PopStateEvent('popstate'))
       } else {
         showToast(result.message || 'Помилка оформлення', 'error')
       }
@@ -173,5 +174,5 @@ function bindCartEvents(container) {
 }
 
 function rerenderCart() {
-  window.dispatchEvent(new HashChangeEvent('hashchange'))
+  window.dispatchEvent(new PopStateEvent('popstate'))
 }

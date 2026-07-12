@@ -14,7 +14,7 @@ export async function renderOrders() {
       <div class="text-center py-20">
         <h1 class="text-2xl font-bold text-slate-800">Мої замовлення</h1>
         <p class="text-slate-500 mt-2 mb-8">Оформіть замовлення, щоб побачити його тут</p>
-        <a href="#/categories" class="inline-flex px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
+        <a href="/categories" class="inline-flex px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
           Перейти до каталогу
         </a>
       </div>`

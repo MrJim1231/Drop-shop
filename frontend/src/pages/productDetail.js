@@ -18,10 +18,10 @@ export async function renderProductDetail(productId) {
 
     container.innerHTML = `
       <nav class="text-sm text-slate-500 mb-6">
-        <a href="#/" class="hover:text-indigo-600">Головна</a>
+        <a href="/" class="hover:text-indigo-600">Головна</a>
         <span class="mx-2">/</span>
-        <a href="#/categories" class="hover:text-indigo-600">Каталог</a>
-        ${product.category_id ? `<span class="mx-2">/</span><a href="#/category/${product.category_id}" class="hover:text-indigo-600">${escapeHtml(product.category_name || '')}</a>` : ''}
+        <a href="/categories" class="hover:text-indigo-600">Каталог</a>
+        ${product.category_id ? `<span class="mx-2">/</span><a href="/category/${product.category_id}" class="hover:text-indigo-600">${escapeHtml(product.category_name || '')}</a>` : ''}
         <span class="mx-2">/</span>
         <span class="text-slate-800">${escapeHtml(product.name)}</span>
       </nav>
@@ -96,7 +96,7 @@ export async function renderProductDetail(productId) {
     container.innerHTML = `
       <div class="text-center py-16">
         <p class="text-slate-500 mb-4">Товар не знайдено</p>
-        <a href="#/categories" class="text-indigo-600 hover:text-indigo-700 font-medium">← Повернутись до каталогу</a>
+        <a href="/categories" class="text-indigo-600 hover:text-indigo-700 font-medium">← Повернутись до каталогу</a>
       </div>`
   }
 
