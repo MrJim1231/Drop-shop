@@ -143,7 +143,7 @@ export function initRouter() {
       if (link) {
         const href = link.getAttribute('href')
         // Let PHP-routed paths do a normal browser navigation (full page load)
-        const phpRoutes = [/^\/course__udemy\/$/, /^\/course__udemy\/categories/, /^\/course__udemy\/category\//, /^\/course__udemy\/product\//]
+        const phpRoutes = [/^\/course__udemy\/$/, /^\/course__udemy\/categories/, /^\/course__udemy\/deals/, /^\/course__udemy\/category\//, /^\/course__udemy\/product\//]
         if (href && href.startsWith('/') && !href.startsWith('//')) {
           const isPHP = phpRoutes.some(r => r.test(href))
           if (!isPHP) {

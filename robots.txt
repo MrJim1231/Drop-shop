@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Private pages — do NOT index
+Disallow: /admin
+Disallow: /cart
+Disallow: /orders
+Disallow: /profile
+Disallow: /login
+Disallow: /backend/
+Disallow: /uploads/
+Disallow: /frontend/src/
+
+# Sitemap location (submit this URL to Google Search Console!)
+# Replace "yourdomain.com" with your real domain before uploading.
+Sitemap: https://yourdomain.com/sitemap.php

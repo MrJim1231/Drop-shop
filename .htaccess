@@ -6,6 +6,15 @@ RewriteRule ^$ index.php [L]
 # Route categories page
 RewriteRule ^categories/?$ categories.php [L]
 
+# Route deals page
+RewriteRule ^deals/?$ deals.php [L]
+
+# Route sitemap
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+# Route robots.txt to root file
+RewriteRule ^robots\.txt$ robots.txt [L]
+
 # Route product pages
 RewriteRule ^product/([a-zA-Z0-9_\-]+) product.php?id=$1 [QSA,L]
 
