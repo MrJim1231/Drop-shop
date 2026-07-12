@@ -173,6 +173,10 @@ try {
         }
 
         $price = (float)$offer->price;
+        $markup = isset($_GET['markup']) ? (float)$_GET['markup'] : 0.0;
+        if ($markup > 0) {
+            $price = round($price * (1 + $markup / 100), 2);
+        }
         $categoryId = (int)$offer->categoryId;
         
         $availableAttr = strtolower(trim((string)$offer['available']));

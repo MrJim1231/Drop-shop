@@ -103,6 +103,13 @@ function renderAdminDashboard(contentEl, loaderEl) {
             </label>
 
             <div>
+              <label for="markup-percent" class="block text-sm font-medium text-slate-700 mb-2">Націнка на ціну товарів (%)</label>
+              <input type="number" id="markup-percent" min="0" value="0" placeholder="0"
+                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all font-normal text-sm" />
+              <p class="text-xs text-slate-400 mt-1.5 font-normal">Буде додано зазначений відсоток до оригінальної ціни постачальника</p>
+            </div>
+
+            <div>
               <label for="xml-url" class="block text-sm font-medium text-slate-700 mb-2">Посилання на XML/YML каталог</label>
               <input type="url" id="xml-url" placeholder="https://opt-drop.com/storage/xml/opt-drop-20.xml"
                 class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all font-normal text-sm" />
@@ -264,7 +271,8 @@ function bindDashboardEvents(container) {
     }
 
     const isReset = resetDbCheckbox.checked
-    const importUrl = `${API_URL}../scripts/import_xml.php?url=${encodeURIComponent(url)}${isReset ? '&reset=1' : ''}`
+    const markup = parseFloat(container.querySelector('#markup-percent')?.value) || 0
+    const importUrl = `${API_URL}../scripts/import_xml.php?url=${encodeURIComponent(url)}${isReset ? '&reset=1' : ''}${markup > 0 ? `&markup=${markup}` : ''}`
     
     consoleTitle.textContent = 'import_xml.php'
     consoleContainer.classList.remove('hidden')
@@ -323,7 +331,8 @@ function bindDashboardEvents(container) {
         btn.addEventListener('click', () => {
           const fileName = btn.getAttribute('data-import-file')
           const isReset = resetDbCheckbox.checked
-          const importUrl = `${API_URL}../scripts/import_products.php?file=${encodeURIComponent(fileName)}${isReset ? '&reset=1' : ''}`
+          const markup = parseFloat(container.querySelector('#markup-percent')?.value) || 0
+          const importUrl = `${API_URL}../scripts/import_products.php?file=${encodeURIComponent(fileName)}${isReset ? '&reset=1' : ''}${markup > 0 ? `&markup=${markup}` : ''}`
           
           consoleTitle.textContent = 'import_products.php'
           consoleContainer.classList.remove('hidden')

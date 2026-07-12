@@ -122,6 +122,12 @@ try {
         $name = trim(getCell($row, $columnMap, 'name_uk'));
         $description = trim(getCell($row, $columnMap, 'desc_uk'));
         $price = parsePrice(getCell($row, $columnMap, 'price'));
+        
+        $markup = isset($_GET['markup']) ? (float)$_GET['markup'] : 0.0;
+        if ($markup > 0) {
+            $price = round($price * (1 + $markup / 100), 2);
+        }
+
         $categoryPath = trim(getCell($row, $columnMap, 'category'));
         $availabilityText = trim(getCell($row, $columnMap, 'availability'));
         $mainImage = trim(getCell($row, $columnMap, 'main_image'));
