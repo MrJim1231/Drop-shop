@@ -38,6 +38,11 @@ if ($category_id > 0) {
             // Добавляем изображения к товару
             $row['images'] = $images;
 
+            // Знижка
+            $discount = (int)($row['discount'] ?? 0);
+            $row['discount'] = $discount;
+            $row['discounted_price'] = $discount > 0 ? round((float)$row['price'] * (1 - $discount / 100), 2) : null;
+
             // Добавляем товар в список
             $products[] = $row;
         }

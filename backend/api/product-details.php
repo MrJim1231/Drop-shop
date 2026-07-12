@@ -46,4 +46,10 @@ $product['images'] = $images;
 $product['image'] = $images[0] ?? null;
 $product['sizes'] = [];
 
+// Розрахунок знижки
+$discount = (int)($product['discount'] ?? 0);
+$price = (float)$product['price'];
+$product['discount'] = $discount;
+$product['discounted_price'] = $discount > 0 ? round($price * (1 - $discount / 100), 2) : null;
+
 echo json_encode($product, JSON_UNESCAPED_UNICODE);

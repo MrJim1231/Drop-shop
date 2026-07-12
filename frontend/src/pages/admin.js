@@ -1,6 +1,6 @@
 import { authStore } from '../store/auth.js'
 import { api } from '../api/client.js'
-import { showToast, loadingSpinner, escapeHtml } from '../utils.js'
+import { showToast, loadingSpinner, escapeHtml, formatPrice } from '../utils.js'
 import { API_URL } from '../api/config.js'
 
 export async function renderAdmin() {
@@ -155,6 +155,32 @@ function renderAdminDashboard(contentEl, loaderEl) {
         </div>
         <iframe id="import-terminal" class="w-full h-[400px] bg-slate-950 border-0 m-0 p-0 block"></iframe>
       </div>
+    </div>
+
+    <!-- Управління знижками -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 mt-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-xl">🏷️</div>
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Управління знижками</h2>
+          <p class="text-sm text-slate-500 font-normal">Знайдіть товар і встановіть йому знижку. Стара ціна буде відображатися закресленою.</p>
+        </div>
+      </div>
+
+      <div class="flex gap-3 mb-6">
+        <div class="relative flex-1">
+          <input type="search" id="discount-search-input" placeholder="Введіть назву або ID товару..."
+            class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all text-sm text-slate-700" />
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <button id="discount-search-btn" class="px-5 py-3 bg-slate-800 text-white font-semibold rounded-xl hover:bg-indigo-600 transition-colors text-sm cursor-pointer">
+          Знайти
+        </button>
+      </div>
+
+      <div id="discount-results" class="hidden">
+        <div id="discount-products-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-1"></div>
+      </div>
     </div>`
 
   bindDashboardEvents(contentEl)
@@ -180,6 +206,7 @@ function bindDashboardEvents(container) {
   // Load stats & files list
   loadAdminStats()
   loadCatalogsList()
+  bindDiscountSection(container)
 
   // Auto refresh stats when import script finishes execution (iframe loaded)
   importTerminal.addEventListener('load', () => {
@@ -430,4 +457,95 @@ function bindDashboardEvents(container) {
       listContainer.innerHTML = `<p class="text-center text-red-500 py-8 font-normal">Не вдалося завантажити список файлів: ${escapeHtml(err.message)}</p>`
     }
   }
+}
+
+function bindDiscountSection(container) {
+  const searchInput = container.querySelector('#discount-search-input')
+  const searchBtn = container.querySelector('#discount-search-btn')
+  const resultsDiv = container.querySelector('#discount-results')
+  const productsList = container.querySelector('#discount-products-list')
+
+  const doSearch = async () => {
+    const q = searchInput.value.trim()
+    if (!q) { showToast('Введіть назву або ID товару', 'error'); return }
+
+    searchBtn.disabled = true
+    searchBtn.textContent = 'Пошук...'
+    productsList.innerHTML = `<div class="flex justify-center py-8"><div class="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div></div>`
+    resultsDiv.classList.remove('hidden')
+
+    try {
+      const data = await api.searchProductsAdmin(q)
+      const products = data.products || []
+
+      if (!products.length) {
+        productsList.innerHTML = `<p class="text-center text-slate-500 py-6 text-sm">Товарів не знайдено за запитом «${escapeHtml(q)}»</p>`
+        return
+      }
+
+      productsList.innerHTML = products.slice(0, 20).map(p => {
+        const discount = parseInt(p.discount) || 0
+        const hasDiscount = discount > 0
+        return `
+          <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-indigo-200 transition-all" data-product-id="${escapeHtml(p.id)}">
+            <img src="${escapeHtml(p.image || p.images?.[0] || 'https://placehold.co/64x64/f1f5f9/94a3b8?text=?')}"
+              class="w-14 h-14 rounded-xl object-cover bg-white border border-slate-200 flex-shrink-0" />
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-slate-800 line-clamp-1">${escapeHtml(p.name)}</p>
+              <p class="text-xs text-slate-500 mt-0.5">ID: ${escapeHtml(p.id)}</p>
+              <div class="flex items-baseline gap-2 mt-1">
+                ${hasDiscount
+                  ? `<span class="text-sm font-bold text-rose-600">${p.discounted_price ? Math.round(p.discounted_price) + ' грн' : ''}</span>
+                     <span class="text-xs text-slate-400 line-through">${p.price} грн</span>
+                     <span class="text-[10px] font-black bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded">-${discount}%</span>`
+                  : `<span class="text-sm font-bold text-indigo-600">${p.price} грн</span>`
+                }
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="relative">
+                <input type="number" min="0" max="99" value="${discount}"
+                  class="discount-input w-20 px-3 py-2 pr-6 border border-slate-200 rounded-xl text-sm text-center font-bold focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none" />
+                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">%</span>
+              </div>
+              <button class="set-discount-btn px-4 py-2 bg-rose-600 text-white font-semibold text-sm rounded-xl hover:bg-rose-700 transition-colors cursor-pointer flex-shrink-0">
+                Зберегти
+              </button>
+            </div>
+          </div>`
+      }).join('')
+
+      // Bind save buttons
+      productsList.querySelectorAll('[data-product-id]').forEach(row => {
+        const productId = row.getAttribute('data-product-id')
+        const saveBtn = row.querySelector('.set-discount-btn')
+        const discountInput = row.querySelector('.discount-input')
+
+        saveBtn.addEventListener('click', async () => {
+          const discount = Math.max(0, Math.min(99, parseInt(discountInput.value) || 0))
+          saveBtn.disabled = true
+          saveBtn.textContent = '...'
+          try {
+            await api.setDiscount(productId, discount)
+            showToast(discount > 0 ? `Знижка ${discount}% збережена!` : 'Знижку знято')
+            discountInput.value = discount
+            // Refresh to show updated prices
+            doSearch()
+          } catch (err) {
+            showToast(err.message || 'Помилка збереження', 'error')
+            saveBtn.disabled = false
+            saveBtn.textContent = 'Зберегти'
+          }
+        })
+      })
+    } catch (err) {
+      productsList.innerHTML = `<p class="text-center text-red-500 py-6 text-sm">Помилка пошуку: ${escapeHtml(err.message)}</p>`
+    } finally {
+      searchBtn.disabled = false
+      searchBtn.textContent = 'Знайти'
+    }
+  }
+
+  searchBtn.addEventListener('click', doSearch)
+  searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch() })
 }

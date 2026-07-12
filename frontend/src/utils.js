@@ -91,16 +91,29 @@ export function productCard(product, linkPrefix = '/product/') {
   const slug = slugify(product.name)
   const href = `${linkPrefix}${product.id}${slug ? '-' + slug : ''}`
 
+  const discount = parseInt(product.discount) || 0
+  const hasDiscount = discount > 0 && product.discounted_price != null
+  const displayPrice = hasDiscount ? product.discounted_price : product.price
+
+  const priceHtml = hasDiscount
+    ? `<div class="flex items-baseline gap-2 mt-2 flex-wrap">
+        <p class="text-lg font-bold text-rose-600">${formatPrice(displayPrice)}</p>
+        <p class="text-sm text-slate-400 line-through font-normal">${formatPrice(product.price)}</p>
+        <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-black bg-rose-100 text-rose-600">-${discount}%</span>
+      </div>`
+    : `<p class="text-lg font-bold text-indigo-600 mt-2">${formatPrice(product.price)}</p>`
+
   return `
     <a href="${href}" class="product-card group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
       <div class="aspect-square overflow-hidden bg-slate-100 relative">
         <img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}" class="product-image w-full h-full object-cover" loading="lazy" />
         ${!available ? '<span class="absolute top-3 left-3 bg-slate-800/80 text-white text-xs px-2 py-1 rounded-full">Немає в наявності</span>' : ''}
+        ${hasDiscount ? `<span class="absolute top-3 right-3 bg-rose-600 text-white text-xs font-black px-2 py-1 rounded-full shadow-md">-${discount}%</span>` : ''}
       </div>
       <div class="p-4">
         <h3 class="font-medium text-slate-800 line-clamp-2 group-hover:text-indigo-600 transition-colors">${escapeHtml(product.name)}</h3>
         ${product.size ? `<p class="text-xs text-slate-500 mt-1">${escapeHtml(product.size)}</p>` : ''}
-        <p class="text-lg font-bold text-indigo-600 mt-2">${formatPrice(product.price)}</p>
+        ${priceHtml}
       </div>
     </a>`
 }

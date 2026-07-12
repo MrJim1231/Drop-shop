@@ -98,4 +98,12 @@ export const api = {
     }),
 
   getStats: () => request('get_stats.php'),
+
+  setDiscount: (product_id, discount) =>
+    request('set_discount.php', {
+      method: 'POST',
+      body: JSON.stringify({ product_id, discount }),
+    }),
+
+  searchProductsAdmin: (query) => request(`products.php?q=${encodeURIComponent(query)}&page=1`),
 }

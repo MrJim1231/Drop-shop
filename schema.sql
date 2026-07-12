@@ -25,6 +25,7 @@ CREATE TABLE products (
   name              VARCHAR(255) NOT NULL,
   description       TEXT,
   price             DECIMAL(10, 2) NOT NULL,
+  discount          TINYINT(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Знижка у відсотках (0-99)',
   size              VARCHAR(255) DEFAULT NULL,
   availability      TINYINT(1) DEFAULT 1,
   quantity_in_stock INT DEFAULT 0,
@@ -37,6 +38,7 @@ CREATE TABLE products (
 
 -- Если таблица products уже создана, запустите этот запрос в СУБД:
 -- ALTER TABLE products ADD COLUMN supplier VARCHAR(100) DEFAULT NULL;
+-- ALTER TABLE products ADD COLUMN discount TINYINT(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Знижка у відсотках (0-99)';
 
 
 -- 3. Изображения товаров
