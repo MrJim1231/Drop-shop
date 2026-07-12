@@ -332,16 +332,23 @@ async function loadProducts(container) {
   const el = container.querySelector('#home-products')
   try {
     const data = await api.getProducts(1)
-    const products = data.products?.slice(0, 8) || []
+    const products = data.products?.slice(0, 4) || []
 
     if (products.length === 0) {
       el.innerHTML = `<p class="text-center text-slate-500 py-8">Товари ще не додані. Запустіть импорт на бекенді.</p>`
       return
     }
 
-    el.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 stagger-grid">
-      ${products.map((p) => productCard(p)).join('')}
-    </div>`
+    el.innerHTML = `
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 stagger-grid">
+        ${products.map((p) => productCard(p)).join('')}
+      </div>
+      <div class="flex justify-center mt-12">
+        <a href="/categories" class="inline-flex items-center justify-center px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-600/20 hover:-translate-y-0.5">
+          Дивитись всі товари
+          <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+        </a>
+      </div>`
   } catch {
     el.innerHTML = `<p class="text-center text-slate-500 py-8">Не вдалося завантажити товари.</p>`
   }

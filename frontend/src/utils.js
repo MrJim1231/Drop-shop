@@ -97,21 +97,21 @@ export function productCard(product, linkPrefix = '/product/') {
 
   const priceHtml = hasDiscount
     ? `<div class="flex items-baseline gap-2 mt-2 flex-wrap">
-        <p class="text-lg font-bold text-rose-600">${formatPrice(displayPrice)}</p>
-        <p class="text-sm text-slate-400 line-through font-normal">${formatPrice(product.price)}</p>
-        <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-black bg-rose-100 text-rose-600">-${discount}%</span>
+        <p class="text-lg font-bold text-rose-600 dark:text-rose-400">${formatPrice(displayPrice)}</p>
+        <p class="text-sm text-slate-400 dark:text-slate-500 line-through font-normal">${formatPrice(product.price)}</p>
+        <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-black bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">-${discount}%</span>
       </div>`
-    : `<p class="text-lg font-bold text-indigo-600 mt-2">${formatPrice(product.price)}</p>`
+    : `<p class="text-lg font-bold text-indigo-600 dark:text-indigo-400 mt-2">${formatPrice(product.price)}</p>`
 
   return `
-    <a href="${href}" class="product-card group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
-      <div class="aspect-square overflow-hidden bg-slate-100 relative">
+    <a href="${href}" class="product-card group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden hover:shadow-lg hover:border-indigo-200 dark:hover:border-white/10 transition-all duration-300">
+      <div class="aspect-square overflow-hidden bg-slate-100 dark:bg-slate-950 relative">
         <img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}" class="product-image w-full h-full object-cover" loading="lazy" />
         ${!available ? '<span class="absolute top-3 left-3 bg-slate-800/80 text-white text-xs px-2 py-1 rounded-full">Немає в наявності</span>' : ''}
         ${hasDiscount ? `<span class="absolute top-3 right-3 bg-rose-600 text-white text-xs font-black px-2 py-1 rounded-full shadow-md">-${discount}%</span>` : ''}
       </div>
       <div class="p-4">
-        <h3 class="font-medium text-slate-800 line-clamp-2 group-hover:text-indigo-600 transition-colors">${escapeHtml(product.name)}</h3>
+        <h3 class="font-medium text-slate-800 dark:text-slate-200 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">${escapeHtml(product.name)}</h3>
         ${product.size ? `<p class="text-xs text-slate-500 mt-1">${escapeHtml(product.size)}</p>` : ''}
         ${priceHtml}
       </div>
