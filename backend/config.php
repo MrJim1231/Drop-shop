@@ -13,6 +13,6 @@ if (!defined('DB_PASSWORD')) {
 }
 
 if (!defined('DB_DATABASE')) {
-    define('DB_DATABASE', 'shop_db');
+    define('DB_DATABASE', 'online_shop_db');
 }
 ?>
