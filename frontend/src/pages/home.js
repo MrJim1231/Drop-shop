@@ -7,21 +7,21 @@ export async function renderHome() {
 
   const slides = [
     {
-      image: '/electronics_banner.png',
+      image: '/electronics_banner.webp',
       title: 'Світ передової електроніки',
       subtitle: 'Відкрийте для себе найсучасніші смартфони, навушники та смарт-гаджети за найкращими цінами.',
       link: '/categories',
       btnText: 'Перейти до каталогу'
     },
     {
-      image: '/accessories_banner.png',
+      image: '/accessories_banner.webp',
       title: 'Преміальні аксесуари',
       subtitle: 'Створіть свій неповторний образ із нашою колекцією годинників, окулярів та шкіряних виробів.',
       link: '/categories',
       btnText: 'Обрати стиль'
     },
     {
-      image: '/home_banner.png',
+      image: '/home_banner.webp',
       title: 'Розумний та затишний дім',
       subtitle: 'Інноваційні гаджети та побутова техніка для комфортного повсякденного життя.',
       link: '/categories',
@@ -105,7 +105,7 @@ export async function renderHome() {
           
           <!-- Картка 1 -->
           <div class="relative rounded-3xl overflow-hidden shadow-xl group h-72 sm:h-80 md:h-[350px]">
-            <img src="/accessories_banner.png" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" alt="Нова колекція">
+            <img src="/accessories_banner.webp" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" alt="Нова колекція">
             <div class="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/70 to-transparent"></div>
             <div class="relative z-10 p-8 sm:p-12 flex flex-col justify-center h-full w-[85%] sm:w-2/3">
               <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-4 uppercase tracking-widest w-fit">Тільки сьогодні</span>
@@ -119,7 +119,7 @@ export async function renderHome() {
 
           <!-- Картка 2 -->
           <div class="relative rounded-3xl overflow-hidden shadow-xl group h-72 sm:h-80 md:h-[350px]">
-            <img src="/electronics_banner.png" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" alt="Топ продажу">
+            <img src="/electronics_banner.webp" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" alt="Топ продажу">
             <div class="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/70 to-transparent"></div>
             <div class="relative z-10 p-8 sm:p-12 flex flex-col justify-center h-full w-[85%] sm:w-2/3">
               <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 mb-4 uppercase tracking-widest w-fit">🔥 Топ продажу</span>
