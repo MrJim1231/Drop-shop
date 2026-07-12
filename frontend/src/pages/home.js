@@ -169,7 +169,7 @@ export async function renderHome() {
       <div class="text-center max-w-3xl mx-auto mb-16">
         <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-600 mb-4 uppercase tracking-widest border border-indigo-100/80">Переваги магазину</span>
         <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-none mb-4">Наш сервіс — ваша впевненість</h2>
-        <p class="text-base sm:text-lg text-slate-500 font-medium">Ми дбаємо про якість кожного замовлення та комфорт кожного клієнта</p>
+        <p class="text-base sm:text-lg text-slate-600 font-medium">Ми дбаємо про якість кожного замовлення та комфорт кожного клієнта</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -186,7 +186,7 @@ export async function renderHome() {
             </svg>
           </div>
           <h3 class="font-bold text-slate-900 dark:text-white text-xl tracking-tight mb-3">Швидка доставка</h3>
-          <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed font-normal">Відправляємо замовлення протягом 1–3 робочих днів по всій території України зручним для вас способом.</p>
+          <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed font-normal">Відправляємо замовлення протягом 1–3 робочих днів по всій території України зручним для вас способом.</p>
         </div>
 
         <!-- Картка 2: Гарантія -->
@@ -201,7 +201,7 @@ export async function renderHome() {
             </svg>
           </div>
           <h3 class="font-bold text-slate-900 dark:text-white text-xl tracking-tight mb-3">Гарантія якості</h3>
-          <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed font-normal">Ми працюємо виключно з оригінальними та ретельно перевіреними товарами від надійних виробників.</p>
+          <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed font-normal">Ми працюємо виключно з оригінальними та ретельно перевіреними товарами від надійних виробників.</p>
         </div>
 
         <!-- Картка 3: Підтримка -->
@@ -216,7 +216,7 @@ export async function renderHome() {
             </svg>
           </div>
           <h3 class="font-bold text-slate-900 dark:text-white text-xl tracking-tight mb-3">Підтримка 24/7</h3>
-          <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed font-normal">Наші професійні менеджери завжди готові оперативно допомогти вам з вибором та будь-якими питаннями.</p>
+          <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed font-normal">Наші професійні менеджери завжди готові оперативно допомогти вам з вибором та будь-якими питаннями.</p>
         </div>
 
       </div>

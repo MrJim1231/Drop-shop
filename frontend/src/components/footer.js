@@ -27,7 +27,7 @@ export function renderFooter() {
             </ul>
           </div>
         </div>
-        <div class="border-t border-slate-800 mt-8 pt-8 text-center text-sm text-slate-500">
+        <div class="border-t border-slate-800 mt-8 pt-8 text-center text-sm text-slate-400">
           © ${new Date().getFullYear()} DropShop. Всі права захищені.
         </div>
       </div>
