@@ -10,6 +10,7 @@ import { renderOrders } from './pages/orders.js'
 import { renderProfile } from './pages/profile.js'
 import { renderAdmin } from './pages/admin.js'
 import { renderSearch } from './pages/search.js'
+import { renderDeals } from './pages/deals.js'
 
 const routes = {
   '/': () => renderHome(),
@@ -22,6 +23,7 @@ const routes = {
   '/profile': () => renderProfile(),
   '/admin': () => renderAdmin(),
   '/search': () => renderSearch(),
+  '/deals': () => renderDeals(),
 }
 
 export function navigateTo(path) {

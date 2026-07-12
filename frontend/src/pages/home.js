@@ -111,7 +111,7 @@ export async function renderHome() {
               <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-4 uppercase tracking-widest w-fit">Тільки сьогодні</span>
               <h3 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 leading-tight tracking-tight">Знижка -20% на всі аксесуари</h3>
               <p class="text-sm text-slate-300 mb-8 font-medium">Оновіть свій стиль за найкращими цінами.</p>
-              <a href="/categories" class="inline-flex items-center justify-center px-6 py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-indigo-50 transition-colors shadow-lg w-fit group-hover:scale-105 duration-300">
+              <a href="/deals" class="inline-flex items-center justify-center px-6 py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-indigo-50 transition-colors shadow-lg w-fit group-hover:scale-105 duration-300">
                 Обрати зараз
               </a>
             </div>
@@ -156,7 +156,7 @@ export async function renderHome() {
           </span>
           <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight drop-shadow-md">Знижки до -50% на техніку та аксесуари</h2>
           <p class="text-lg text-indigo-100 mb-8 max-w-xl leading-relaxed drop-shadow-sm">Оновіть свій арсенал гаджетів з нашими найкращими товарами. Акція діє лише до кінця тижня. Не проґавте свій шанс отримати преміальну якість за вигідною ціною!</p>
-          <a href="/categories" class="inline-flex items-center px-6 py-3.5 bg-white text-indigo-900 font-bold rounded-xl hover:bg-indigo-50 hover:scale-105 transition-all duration-300 shadow-xl shadow-black/20">
+          <a href="/deals" class="inline-flex items-center px-6 py-3.5 bg-white text-indigo-900 font-bold rounded-xl hover:bg-indigo-50 hover:scale-105 transition-all duration-300 shadow-xl shadow-black/20">
             Переглянути акції
             <svg class="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
           </a>

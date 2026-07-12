@@ -3,7 +3,7 @@ require_once __DIR__ . '/../includes/cors.php';
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../includes/db.php';
 
-$result = $conn->query("SELECT id, name, price, discount, size FROM products WHERE discount > 0 ORDER BY discount DESC LIMIT 100");
+$result = $conn->query("SELECT id, name, price, discount, size, availability FROM products WHERE discount > 0 ORDER BY discount DESC LIMIT 100");
 $products = [];
 while ($row = $result->fetch_assoc()) {
     $productId = $row['id'];
@@ -26,6 +26,7 @@ while ($row = $result->fetch_assoc()) {
         'discount'         => $discount,
         'discounted_price' => round($price * (1 - $discount / 100), 2),
         'size'             => $row['size'],
+        'availability'     => (int)$row['availability'],
         'image'            => $image
     ];
 }
