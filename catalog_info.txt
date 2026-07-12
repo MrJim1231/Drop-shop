@@ -1,0 +1,13 @@
+﻿python : Traceback (most recent call last):
+C:\Users\berol\AppData\Local\Temp\ps-script-f8029057-74ce-4125-b208-6388d52108af.ps1:103 знак:21
++ chcp 65001 > $null; python -c "
++                     ~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "<string>", line 36, in <module>
+    prices = [float(r[price_idx]) for r in rows[1:] if len(r)>price_idx and r[price_idx]]
+              ~~~~~^^^^^^^^^^^^^^
+ValueError: could not convert string to float: 'TV-SHOP'
+HEADERS: ['SKU', '╨Э╨░╨╖╨▓╨░ (╤Г╨║╤А)', '╨Э╨░╨╖╨▓╨░ (╤А╤Г╤Б)', '╨Ю╨┐╨╕╤Б (╤Г╨║╤А)', '╨Ю╨┐╨╕╤Б (╤А╤Г╤Б)', '╨Ф╤А╨╛╨┐-╤Ж╤Ц╨╜╨░ (UAH)', '╨Ю╨┐╤В╨╛╨▓╨░ ╤Ж╤Ц╨╜╨░ (UAH)', '╨Ъ╨░╤В╨╡╨│╨╛╤А╤Ц╤Ч', '╨С╤А╨╡╨╜╨┤', '╨Э╨░╤П╨▓╨╜╤Ц╤Б╤В╤М', '╨У╨╛╨╗╨╛╨▓╨╜╨╡ ╤Д╨╛╤В╨╛', '╨Ф╨╛╨┤╨░╤В╨║╨╛╨▓╤Ц ╤Д╨╛╤В╨╛', '╨Я╨╛╤Б╨╕╨╗╨░╨╜╨╜╤П']
+TOP CATEGORIES: [('╨Т ╨╜╨░╤П╨▓╨╜╨╛╤Б╤В╤Ц', 1727), ('5', 139), ('59', 103), ('00', 103), ('9', 99), ('34', 92), ('12', 34), ('55', 30), ('14', 28), ('40', 15), ('10', 2), ('98', 2), ('19', 2), ('https://dropt.in.ua/image/catalog/products/51/51897_a6d7eed0a631.jpg', 1), ('https://dropt.in.ua/image/catalog/products/11/11821_dc9df629d6d1.jpeg', 1), ('https://dropt.in.ua/image/catalog/products/52/52095_9be45dd4ddd4.png', 1), ('https://dropt.in.ua/image/catalog/products/51/51579_97c8df28664f.jpeg', 1), ('https://dropt.in.ua/obrobka-tovaru', 1), ('https://dropt.in.ua/image/catalog/products/55/55158_cfabcc119d14.jpg', 1), ('https://dropt.in.ua/image/catalog/products/55/55161_f59c09a2353d.png', 1)]
