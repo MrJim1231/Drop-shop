@@ -175,11 +175,11 @@ export async function renderHome() {
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         
         <!-- Картка 1: Доставка -->
-        <div class="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/50 rounded-[2.5rem] border border-slate-200/50 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group">
+        <div class="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/50 rounded-[2.5rem] border border-slate-200/50 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group text-center">
           <!-- Background glow effect -->
           <div class="absolute -right-16 -bottom-16 w-36 h-36 bg-blue-100/40 rounded-full filter blur-2xl group-hover:bg-blue-100/60 transition-colors duration-300"></div>
           
-          <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 mb-8 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+          <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 mb-8 mx-auto transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
             <!-- Modern SVG Box Icon -->
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -190,11 +190,11 @@ export async function renderHome() {
         </div>
 
         <!-- Картка 2: Гарантія -->
-        <div class="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/50 rounded-[2.5rem] border border-slate-200/50 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group">
+        <div class="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/50 rounded-[2.5rem] border border-slate-200/50 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group text-center">
           <!-- Background glow effect -->
           <div class="absolute -right-16 -bottom-16 w-36 h-36 bg-emerald-100/40 rounded-full filter blur-2xl group-hover:bg-emerald-100/60 transition-colors duration-300"></div>
 
-          <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 mb-8 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+          <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 mb-8 mx-auto transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
             <!-- Modern SVG Shield/Check Icon -->
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -205,11 +205,11 @@ export async function renderHome() {
         </div>
 
         <!-- Картка 3: Підтримка -->
-        <div class="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/50 rounded-[2.5rem] border border-slate-200/50 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group">
+        <div class="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/50 rounded-[2.5rem] border border-slate-200/50 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group text-center">
           <!-- Background glow effect -->
           <div class="absolute -right-16 -bottom-16 w-36 h-36 bg-indigo-100/40 rounded-full filter blur-2xl group-hover:bg-indigo-100/60 transition-colors duration-300"></div>
 
-          <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 mb-8 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+          <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 mb-8 mx-auto transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
             <!-- Modern SVG Message Chat Icon -->
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
