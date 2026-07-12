@@ -9,12 +9,25 @@ export function renderHeader() {
     <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
-          <a href="/" class="flex items-center gap-2 group">
+          <a href="/" class="flex items-center gap-2 group flex-shrink-0">
             <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg group-hover:bg-indigo-700 transition-colors">D</div>
             <span class="font-bold text-xl text-slate-800 hidden sm:block">DropShop</span>
           </a>
 
-          <nav class="hidden md:flex items-center gap-6">
+          <!-- Пошук товарів (десктоп) -->
+          <div class="flex-1 max-w-md mx-8 hidden md:block">
+            <form id="search-form" class="relative">
+              <input type="search" id="search-input" placeholder="Пошук товарів за назвою..."
+                class="w-full pl-10 pr-4 py-2 bg-slate-100 focus:bg-white border border-transparent focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 rounded-xl text-sm outline-none transition-all font-normal text-slate-700" />
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+              </div>
+            </form>
+          </div>
+
+          <nav class="hidden md:flex items-center gap-6 flex-shrink-0">
             <a href="/" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Головна</a>
             <a href="/categories" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Каталог</a>
             ${isLoggedIn ? `
@@ -23,8 +36,8 @@ export function renderHeader() {
               <a href="/admin" class="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors font-semibold">Адмінка</a>
             ` : ''}
           </nav>
-
-          <div class="flex items-center gap-3">
+ 
+          <div class="flex items-center gap-3 flex-shrink-0">
             ${isLoggedIn
               ? `<button id="logout-btn" class="text-sm text-slate-600 hover:text-red-600 transition-colors hidden sm:block">Вийти</button>`
               : `<a href="/login" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors hidden sm:block">Увійти</a>`
@@ -44,6 +57,16 @@ export function renderHeader() {
         </div>
 
         <div id="mobile-menu" class="hidden md:hidden pb-4 border-t border-slate-100 pt-3">
+          <!-- Пошук товарів (мобільний) -->
+          <form id="mobile-search-form" class="relative mb-3 px-1">
+            <input type="search" id="mobile-search-input" placeholder="Пошук товарів..."
+              class="w-full pl-10 pr-4 py-2 bg-slate-100 border border-transparent focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 rounded-xl text-sm outline-none transition-all font-normal text-slate-700" />
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+          </form>
           <nav class="flex flex-col gap-2">
             <a href="/" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Головна</a>
             <a href="/categories" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Каталог</a>
@@ -73,4 +96,33 @@ export function bindHeaderEvents() {
 
   document.getElementById('logout-btn')?.addEventListener('click', logout)
   document.getElementById('mobile-logout-btn')?.addEventListener('click', logout)
+
+  const handleSearch = (inputVal) => {
+    const query = inputVal.trim()
+    if (query) {
+      window.history.pushState(null, '', `/search?q=${encodeURIComponent(query)}`)
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    }
+  }
+
+  document.getElementById('search-form')?.addEventListener('submit', (e) => {
+    e.preventDefault()
+    handleSearch(document.getElementById('search-input')?.value || '')
+  })
+
+  document.getElementById('mobile-search-form')?.addEventListener('submit', (e) => {
+    e.preventDefault()
+    handleSearch(document.getElementById('mobile-search-input')?.value || '')
+    document.getElementById('mobile-menu')?.classList.add('hidden')
+  })
+
+  // Pre-fill inputs if search query is present in URL
+  const searchParams = new URLSearchParams(window.location.search)
+  const q = searchParams.get('q') || ''
+  if (window.location.pathname === '/search' && q) {
+    const desktopInput = document.getElementById('search-input')
+    const mobileInput = document.getElementById('mobile-search-input')
+    if (desktopInput) desktopInput.value = q
+    if (mobileInput) mobileInput.value = q
+  }
 }

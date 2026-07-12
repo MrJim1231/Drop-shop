@@ -45,6 +45,8 @@ export const api = {
 
   getProducts: (page = 1) => request(`products.php?page=${page}`),
 
+  searchProducts: (query, page = 1) => request(`products.php?q=${encodeURIComponent(query)}&page=${page}`),
+
   getProduct: (id) => request(`product-details.php?id=${id}`),
 
   createOrder: (data) =>
