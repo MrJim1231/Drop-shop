@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Exclude admin and checkout paths from indexing
+Disallow: /admin
+Disallow: /checkout
