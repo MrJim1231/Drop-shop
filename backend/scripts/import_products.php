@@ -90,15 +90,16 @@ if (!$isReset) {
 }
 
 $upsertProduct = $mysqli->prepare(
-    'INSERT INTO products (id, group_id, category_id, name, description, price, size, availability, quantity_in_stock, weight)
-     VALUES (?, NULL, ?, ?, ?, ?, NULL, ?, ?, NULL)
+    'INSERT INTO products (id, group_id, category_id, name, description, price, size, availability, quantity_in_stock, weight, supplier)
+     VALUES (?, NULL, ?, ?, ?, ?, NULL, ?, ?, NULL, ?)
      ON DUPLICATE KEY UPDATE
        name = VALUES(name),
        description = VALUES(description),
        price = VALUES(price),
        category_id = VALUES(category_id),
        availability = VALUES(availability),
-       quantity_in_stock = VALUES(quantity_in_stock)'
+       quantity_in_stock = VALUES(quantity_in_stock),
+       supplier = VALUES(supplier)'
 );
 
 $insertImage = $mysqli->prepare('INSERT INTO product_images (product_id, image) VALUES (?, ?)');
@@ -145,7 +146,7 @@ try {
         $availability = isAvailable($availabilityText) ? 1 : 0;
         $quantity = $availability ? 1 : 0;
 
-        $upsertProduct->bind_param('sissdii', $sku, $categoryId, $name, $description, $price, $availability, $quantity);
+        $upsertProduct->bind_param('sissdiis', $sku, $categoryId, $name, $description, $price, $availability, $quantity, $fileName);
         $upsertProduct->execute();
 
         $affected = $upsertProduct->affected_rows;

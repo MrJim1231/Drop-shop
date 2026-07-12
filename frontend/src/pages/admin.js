@@ -59,12 +59,15 @@ function renderAdminDashboard(contentEl, loaderEl) {
   contentEl.classList.remove('hidden')
 
   contentEl.innerHTML = `
+    <!-- Секція статистики -->
+    <div id="admin-stats-container" class="mb-8"></div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
       <!-- Завантаження файлу каталогу -->
       <div class="bg-slate-50 rounded-2xl border border-slate-200 p-6 flex flex-col justify-between">
         <div>
           <h2 class="text-xl font-bold text-slate-800 mb-2">1. Завантажити Excel-каталог</h2>
-          <p class="text-sm text-slate-500 mb-6 font-normal">Завантажте Excel файл каталогу (.xlsx) на сервер для подальшого локального імпорту.</p>
+          <p class="text-sm text-slate-500 mb-6 font-normal">Завантажте Excel файл каталогу (.xlsx) на сервер для локального імпорту.</p>
           
           <form id="upload-form" class="space-y-4">
             <div id="drop-zone" class="border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-xl p-8 text-center cursor-pointer bg-white transition-all">
@@ -91,7 +94,7 @@ function renderAdminDashboard(contentEl, loaderEl) {
       <div class="bg-slate-50 rounded-2xl border border-slate-200 p-6 flex flex-col justify-between">
         <div>
           <h2 class="text-xl font-bold text-slate-800 mb-2">2. Імпорт за XML/YML посиланням</h2>
-          <p class="text-sm text-slate-500 mb-6 font-normal">Вкажіть посилання на XML/YML фід постачальника для прямого імпорту товарів з інтернету.</p>
+          <p class="text-sm text-slate-500 mb-6 font-normal">Вкажіть посилання на XML/YML фід постачальника для прямого імпорту товарів.</p>
           
           <div class="space-y-4">
             <label class="flex items-center gap-3 cursor-pointer bg-white p-4 border border-slate-200 rounded-xl font-normal">
@@ -174,8 +177,14 @@ function bindDashboardEvents(container) {
   const consoleTitle = container.querySelector('#console-title')
   const importTerminal = container.querySelector('#import-terminal')
 
-  // Load catalog files list
+  // Load stats & files list
+  loadAdminStats()
   loadCatalogsList()
+
+  // Auto refresh stats when import script finishes execution (iframe loaded)
+  importTerminal.addEventListener('load', () => {
+    loadAdminStats()
+  })
 
   // Drag & drop handlers
   dropZone.addEventListener('click', () => fileInput.click())
@@ -251,6 +260,7 @@ function bindDashboardEvents(container) {
         fileInfo.classList.add('hidden')
         uploadBtn.disabled = true
         loadCatalogsList() // Refresh the catalogs table!
+        loadAdminStats()   // Refresh stats!
       } else {
         showToast(result.message || 'Помилка завантаження', 'error')
       }
@@ -281,6 +291,56 @@ function bindDashboardEvents(container) {
     consoleContainer.scrollIntoView({ behavior: 'smooth' })
     showToast('Імпорт XML посилання запущено. Слідкуйте за консоллю.', 'info')
   })
+
+  async function loadAdminStats() {
+    const statsContainer = container.querySelector('#admin-stats-container')
+    statsContainer.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-indigo-50/50 border border-indigo-100/80 rounded-2xl p-5 flex items-center gap-4">
+          <div class="text-3xl">📦</div>
+          <div>
+            <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Товарів на сайті</p>
+            <p class="text-2xl font-bold text-slate-800" id="stats-total-products">...</p>
+          </div>
+        </div>
+        <div class="bg-indigo-50/50 border border-indigo-100/80 rounded-2xl p-5 flex items-center gap-4">
+          <div class="text-3xl">🗂️</div>
+          <div>
+            <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Категорій на сайті</p>
+            <p class="text-2xl font-bold text-slate-800" id="stats-total-categories">...</p>
+          </div>
+        </div>
+        <div class="bg-indigo-50/50 border border-indigo-100/80 rounded-2xl p-5 flex flex-col justify-center">
+          <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Товари за постачальниками</p>
+          <div class="space-y-1.5 max-h-16 overflow-y-auto pr-1" id="stats-suppliers-list">
+            <span class="text-xs text-slate-400 font-normal">Завантаження...</span>
+          </div>
+        </div>
+      </div>`
+
+    try {
+      const res = await api.getStats()
+      if (res.status === 'success' && res.data) {
+        const data = res.data
+        container.querySelector('#stats-total-products').textContent = data.total_products.toLocaleString()
+        container.querySelector('#stats-total-categories').textContent = data.total_categories.toLocaleString()
+
+        const list = container.querySelector('#stats-suppliers-list')
+        if (data.suppliers && data.suppliers.length > 0) {
+          list.innerHTML = data.suppliers.map(s => `
+            <div class="flex items-center justify-between text-xs text-slate-700 font-medium">
+              <span class="truncate max-w-[155px]" title="${escapeHtml(s.name)}">🔹 ${escapeHtml(s.name)}</span>
+              <span class="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded font-bold text-[10px]">${s.count}</span>
+            </div>
+          `).join('')
+        } else {
+          list.innerHTML = `<span class="text-xs text-slate-400 font-normal">Товари відсутні</span>`
+        }
+      }
+    } catch (err) {
+      statsContainer.innerHTML = `<div class="text-sm text-red-500 font-normal">Не вдалося завантажити статистику: ${escapeHtml(err.message)}</div>`
+    }
+  }
 
   async function loadCatalogsList() {
     const listContainer = container.querySelector('#catalogs-list-container')
@@ -356,6 +416,7 @@ function bindDashboardEvents(container) {
             if (res.status === 'success') {
               showToast(`Файл '${fileName}' успішно видалено.`)
               loadCatalogsList()
+              loadAdminStats() // Refresh stats!
             } else {
               showToast(res.message || 'Помилка видалення', 'error')
             }

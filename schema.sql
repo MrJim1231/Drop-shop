@@ -29,10 +29,15 @@ CREATE TABLE products (
   availability      TINYINT(1) DEFAULT 1,
   quantity_in_stock INT DEFAULT 0,
   weight            DECIMAL(10, 2) DEFAULT NULL,
+  supplier          VARCHAR(100) DEFAULT NULL,
   FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
   INDEX idx_products_category (category_id),
   INDEX idx_products_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Если таблица products уже создана, запустите этот запрос в СУБД:
+-- ALTER TABLE products ADD COLUMN supplier VARCHAR(100) DEFAULT NULL;
+
 
 -- 3. Изображения товаров
 CREATE TABLE product_images (

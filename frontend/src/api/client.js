@@ -90,4 +90,6 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ fileName }),
     }),
+
+  getStats: () => request('get_stats.php'),
 }
