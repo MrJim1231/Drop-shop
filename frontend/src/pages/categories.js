@@ -27,11 +27,7 @@ export async function renderCategories() {
 
   try {
     const allCategories = await api.getCategories()
-    const rootIds = [1000001, 1000002, 1000003, 1000004, 1000005, 1000006, 1000007, 1000008, 1000009, 1000010, 1000011, 1000012, 1000013, 1000014, 1000015, 1000016, 1000017, 1000018, 1000019, 1000020]
-    let categories = allCategories.filter(c => rootIds.includes(Number(c.id)))
-    if (categories.length === 0) {
-      categories = allCategories
-    }
+    let categories = allCategories
 
     // Render left sidebar
     const sidebarEl = container.querySelector('#categories-sidebar')
@@ -182,11 +178,7 @@ function renderSidebarHtml(categoriesList, currentCategoryId) {
 }
 
 function renderCategoriesTreeHtml(categoriesList, currentCategoryId) {
-  const rootIds = [1000001, 1000002, 1000003, 1000004, 1000005, 1000006, 1000007, 1000008, 1000009, 1000010, 1000011, 1000012, 1000013, 1000014, 1000015, 1000016, 1000017, 1000018, 1000019, 1000020]
-  let filtered = categoriesList.filter(c => rootIds.includes(Number(c.id)))
-  if (filtered.length === 0) {
-    filtered = categoriesList
-  }
+  let filtered = categoriesList
 
   return `
     <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-3">Категорії</h3>

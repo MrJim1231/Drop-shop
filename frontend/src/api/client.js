@@ -108,4 +108,24 @@ export const api = {
   searchProductsAdmin: (query) => request(`products.php?q=${encodeURIComponent(query)}&page=1`),
 
   getDiscountedProducts: () => request('get_discounted_products.php'),
+
+  adminGetCategories: () => request('admin_category_crud.php'),
+
+  adminCategoryCrud: (action, data) =>
+    request('admin_category_crud.php', {
+      method: 'POST',
+      body: JSON.stringify({ action, ...data }),
+    }),
+
+  adminProductCrud: (action, data) =>
+    request('admin_product_crud.php', {
+      method: 'POST',
+      body: JSON.stringify({ action, ...data }),
+    }),
+
+  uploadImage: (formData) =>
+    request('upload_image.php', {
+      method: 'POST',
+      body: formData,
+    }),
 }
