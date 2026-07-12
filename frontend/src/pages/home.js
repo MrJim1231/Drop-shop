@@ -175,7 +175,7 @@ export async function renderHome() {
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         
         <!-- Картка 1: Доставка -->
-        <div class="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-950/80 rounded-[2.5rem] border border-slate-200/50 dark:border-white/5 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group text-center">
+        <div class="relative overflow-hidden bg-white dark:bg-slate-900/60 rounded-[2.5rem] border border-slate-200/60 dark:border-white/5 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group text-center">
           <!-- Background glow effect -->
           <div class="absolute -right-16 -bottom-16 w-36 h-36 bg-blue-100/40 dark:bg-blue-900/10 rounded-full filter blur-2xl group-hover:bg-blue-100/60 dark:group-hover:bg-blue-900/20 transition-colors duration-300"></div>
           
@@ -190,7 +190,7 @@ export async function renderHome() {
         </div>
 
         <!-- Картка 2: Гарантія -->
-        <div class="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-950/80 rounded-[2.5rem] border border-slate-200/50 dark:border-white/5 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group text-center">
+        <div class="relative overflow-hidden bg-white dark:bg-slate-900/60 rounded-[2.5rem] border border-slate-200/60 dark:border-white/5 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group text-center">
           <!-- Background glow effect -->
           <div class="absolute -right-16 -bottom-16 w-36 h-36 bg-emerald-100/40 dark:bg-emerald-900/10 rounded-full filter blur-2xl group-hover:bg-emerald-100/60 dark:group-hover:bg-emerald-900/20 transition-colors duration-300"></div>
 
@@ -205,7 +205,7 @@ export async function renderHome() {
         </div>
 
         <!-- Картка 3: Підтримка -->
-        <div class="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-950/80 rounded-[2.5rem] border border-slate-200/50 dark:border-white/5 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group text-center">
+        <div class="relative overflow-hidden bg-white dark:bg-slate-900/60 rounded-[2.5rem] border border-slate-200/60 dark:border-white/5 p-8 sm:p-10 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group text-center">
           <!-- Background glow effect -->
           <div class="absolute -right-16 -bottom-16 w-36 h-36 bg-indigo-100/40 dark:bg-indigo-900/10 rounded-full filter blur-2xl group-hover:bg-indigo-100/60 dark:group-hover:bg-indigo-900/20 transition-colors duration-300"></div>
 
