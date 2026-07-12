@@ -173,6 +173,15 @@ export async function renderCategories() {
 }
 
 function renderSidebarHtml(categoriesList, currentCategoryId) {
+  return `
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <div>
+        ${renderCategoriesTreeHtml(categoriesList, currentCategoryId)}
+      </div>
+    </div>`
+}
+
+function renderCategoriesTreeHtml(categoriesList, currentCategoryId) {
   const rootIds = [1000001, 1000002, 1000003, 1000004, 1000005, 1000006, 1000007, 1000008, 1000009, 1000010, 1000011, 1000012, 1000013, 1000014, 1000015, 1000016, 1000017, 1000018, 1000019, 1000020]
   let filtered = categoriesList.filter(c => rootIds.includes(Number(c.id)))
   if (filtered.length === 0) {
@@ -180,19 +189,39 @@ function renderSidebarHtml(categoriesList, currentCategoryId) {
   }
 
   return `
-    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-      <div>
-        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-3">Категорії</h3>
-        <ul class="space-y-1.5 pl-1">
-          ${filtered.map(c => `
-            <li>
-              <a href="/category/${c.id}-${slugify(c.name)}" 
-                class="group flex items-center justify-between text-xs font-semibold py-1 text-slate-600 hover:text-indigo-600 transition-colors ${c.id == currentCategoryId ? 'text-indigo-600 font-bold' : ''}">
-                <span>${escapeHtml(c.name)}</span>
-              </a>
-            </li>
-          `).join('')}
-        </ul>
-      </div>
-    </div>`
+    <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-3">Категорії</h3>
+    <ul class="space-y-2 pl-1">
+      ${filtered.map(c => {
+        const hasSubcategories = Array.isArray(c.subcategories) && c.subcategories.length > 0
+        const isDirectActive = Number(c.id) === Number(currentCategoryId)
+        const hasActiveChild = hasSubcategories && c.subcategories.some(sub => Number(sub.id) === Number(currentCategoryId))
+        const isExpanded = isDirectActive || hasActiveChild
+
+        return `
+          <li class="space-y-1">
+            <a href="/category/${c.id}-${slugify(c.name)}" 
+              class="group flex items-center justify-between text-xs py-1 transition-colors ${isDirectActive ? 'text-indigo-600 font-bold' : 'text-slate-600 hover:text-indigo-600 font-semibold'}">
+              <span>${escapeHtml(c.name)}</span>
+              ${hasSubcategories ? `<span class="text-[10px] text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}">▶</span>` : ''}
+            </a>
+            
+            ${hasSubcategories && isExpanded ? `
+              <ul class="pl-4 space-y-1 border-l border-slate-100 my-1">
+                ${c.subcategories.map(sub => {
+                  const isSubActive = Number(sub.id) === Number(currentCategoryId)
+                  return `
+                    <li>
+                      <a href="/category/${sub.id}-${slugify(sub.name)}" 
+                        class="block py-1 text-[11px] transition-colors ${isSubActive ? 'text-indigo-600 font-bold' : 'text-slate-500 hover:text-indigo-600 font-medium'}">
+                        ${escapeHtml(sub.name)}
+                      </a>
+                    </li>
+                  `
+                }).join('')}
+              </ul>
+            ` : ''}
+          </li>
+        `
+      }).join('')}
+    </ul>`
 }
