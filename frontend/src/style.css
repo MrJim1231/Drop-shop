@@ -33,6 +33,17 @@ body {
   flex-direction: column;
 }
 
+/* Global reset for browser active/focus outline boxes */
+a, button {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+a:focus, a:active, a:focus-visible,
+button:focus, button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 
 /* ==========================================================================
    Premium Background — subtle mesh gradient & dot grid
@@ -497,6 +508,19 @@ html.dark #admin-stats-container .bg-indigo-50\/50 {
 
 html.dark table tr:hover td {
   background-color: rgba(99, 102, 241, 0.08) !important;
+}
+
+/* Absolute link and interactive element focus reset */
+a, a *, button, button *, input, select, textarea {
+  outline: none !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+a:focus, a:active, a:focus-visible,
+button:focus, button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 html.dark .bg-rose-50\/20 {

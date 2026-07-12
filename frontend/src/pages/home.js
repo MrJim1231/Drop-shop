@@ -311,14 +311,11 @@ async function loadCategories(container) {
     const top = categories.slice(0, 8)
     el.innerHTML = `<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-y-10 gap-x-6 justify-center">
       ${top.map((cat) => `
-        <a href="/category/${cat.id}-${slugify(cat.name)}" class="group flex flex-col items-center focus:outline-none">
-          <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full border border-slate-200/60 dark:border-white/5 shadow-sm hover:shadow-lg hover:border-indigo-500/30 transition-all duration-300 flex items-center justify-center bg-white dark:bg-slate-900">
-            <!-- Glow Ring -->
-            <div class="absolute -inset-1 rounded-full border border-transparent group-hover:border-indigo-500/20 group-hover:scale-105 transition-all duration-500"></div>
-            
+        <a href="/category/${cat.id}-${slugify(cat.name)}" class="group flex flex-col items-center border-0 border-transparent outline-none focus:outline-none active:outline-none focus:ring-0">
+          <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full shadow-sm group-hover:scale-110 transition-transform duration-300 flex items-center justify-center bg-white dark:bg-slate-900">
             <!-- Inner Image Mask -->
-            <div class="w-full h-full rounded-full overflow-hidden relative z-10">
-              <img src="${escapeHtml(cat.image)}" alt="${escapeHtml(cat.name)}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out" loading="lazy"
+            <div class="w-full h-full rounded-full overflow-hidden relative">
+              <img src="${escapeHtml(cat.image)}" alt="${escapeHtml(cat.name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" loading="lazy"
                 onerror="this.src='https://placehold.co/150x150/f1f5f9/94a3b8?text=${encodeURIComponent(cat.name)}'" />
             </div>
           </div>
