@@ -106,4 +106,6 @@ export const api = {
     }),
 
   searchProductsAdmin: (query) => request(`products.php?q=${encodeURIComponent(query)}&page=1`),
+
+  getDiscountedProducts: () => request('get_discounted_products.php'),
 }

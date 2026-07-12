@@ -181,6 +181,17 @@ function renderAdminDashboard(contentEl, loaderEl) {
       <div id="discount-results" class="hidden">
         <div id="discount-products-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-1"></div>
       </div>
+
+      <!-- Активні знижки -->
+      <div class="mt-8 border-t border-slate-100 pt-6">
+        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <span>Активні знижки на сайті</span>
+          <span id="active-discounts-count" class="text-xs font-normal bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full">Завантаження...</span>
+        </h3>
+        <div id="discounted-active-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-1">
+          <!-- Завантажується автоматично -->
+        </div>
+      </div>
     </div>`
 
   bindDashboardEvents(contentEl)
@@ -464,6 +475,80 @@ function bindDiscountSection(container) {
   const searchBtn = container.querySelector('#discount-search-btn')
   const resultsDiv = container.querySelector('#discount-results')
   const productsList = container.querySelector('#discount-products-list')
+  const activeList = container.querySelector('#discounted-active-list')
+  const activeCountSpan = container.querySelector('#active-discounts-count')
+
+  const loadActiveDiscounts = async () => {
+    activeList.innerHTML = `<div class="col-span-full flex justify-center py-8"><div class="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div></div>`
+    try {
+      const data = await api.getDiscountedProducts()
+      const products = data.products || []
+      activeCountSpan.textContent = products.length
+
+      if (!products.length) {
+        activeList.innerHTML = `<p class="col-span-full text-center text-slate-500 py-8 font-normal text-sm bg-slate-50 rounded-2xl border border-slate-200/60">Немає товарів з активними знижками на сайті.</p>`
+        return
+      }
+
+      activeList.innerHTML = products.map(p => {
+        const discount = parseInt(p.discount) || 0
+        const image = p.image || 'https://placehold.co/64x64/f1f5f9/94a3b8?text=?'
+        return `
+          <div class="flex items-center gap-4 p-4 bg-rose-50/20 rounded-2xl border border-rose-100/60 hover:border-rose-200 hover:bg-rose-50/40 transition-all" data-product-id="${escapeHtml(p.id)}">
+            <img src="${escapeHtml(image)}"
+              class="w-14 h-14 rounded-xl object-cover bg-white border border-slate-200 flex-shrink-0" />
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-slate-800 line-clamp-1">${escapeHtml(p.name)}</p>
+              <p class="text-xs text-slate-500 mt-0.5">ID: ${escapeHtml(p.id)}</p>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-sm font-bold text-rose-600">${Math.round(p.discounted_price)} грн</span>
+                <span class="text-xs text-slate-400 line-through">${p.price} грн</span>
+                <span class="text-[10px] font-black bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded">-${discount}%</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="relative">
+                <input type="number" min="0" max="99" value="${discount}"
+                  class="discount-input w-16 px-2 py-2 pr-5 border border-slate-200 rounded-xl text-sm text-center font-bold focus:border-rose-400 focus:ring-2 focus:ring-rose-100 outline-none" />
+                <span class="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">%</span>
+              </div>
+              <button class="set-discount-btn px-3 py-2 bg-rose-600 text-white font-semibold text-xs rounded-xl hover:bg-rose-700 transition-colors cursor-pointer flex-shrink-0">
+                Зберегти
+              </button>
+            </div>
+          </div>`
+      }).join('')
+
+      // Bind save buttons in active list
+      activeList.querySelectorAll('[data-product-id]').forEach(row => {
+        const productId = row.getAttribute('data-product-id')
+        const saveBtn = row.querySelector('.set-discount-btn')
+        const discountInput = row.querySelector('.discount-input')
+
+        saveBtn.addEventListener('click', async () => {
+          const discount = Math.max(0, Math.min(99, parseInt(discountInput.value) || 0))
+          saveBtn.disabled = true
+          saveBtn.textContent = '...'
+          try {
+            await api.setDiscount(productId, discount)
+            showToast(discount > 0 ? `Знижка ${discount}% збережена!` : 'Знижку знято')
+            loadActiveDiscounts()
+            if (!resultsDiv.classList.contains('hidden')) {
+              doSearch()
+            }
+          } catch (err) {
+            showToast(err.message || 'Помилка збереження', 'error')
+            saveBtn.disabled = false
+            saveBtn.textContent = 'Зберегти'
+          }
+        })
+      })
+
+    } catch (err) {
+      activeCountSpan.textContent = '0'
+      activeList.innerHTML = `<p class="col-span-full text-center text-red-500 py-6 text-sm">Не вдалося завантажити товари зі знижкою: ${escapeHtml(err.message)}</p>`
+    }
+  }
 
   const doSearch = async () => {
     const q = searchInput.value.trim()
@@ -515,7 +600,7 @@ function bindDiscountSection(container) {
           </div>`
       }).join('')
 
-      // Bind save buttons
+      // Bind save buttons in search results
       productsList.querySelectorAll('[data-product-id]').forEach(row => {
         const productId = row.getAttribute('data-product-id')
         const saveBtn = row.querySelector('.set-discount-btn')
@@ -529,7 +614,7 @@ function bindDiscountSection(container) {
             await api.setDiscount(productId, discount)
             showToast(discount > 0 ? `Знижка ${discount}% збережена!` : 'Знижку знято')
             discountInput.value = discount
-            // Refresh to show updated prices
+            loadActiveDiscounts()
             doSearch()
           } catch (err) {
             showToast(err.message || 'Помилка збереження', 'error')
@@ -545,6 +630,9 @@ function bindDiscountSection(container) {
       searchBtn.textContent = 'Знайти'
     }
   }
+
+  // Load discounted products on dashboard load
+  loadActiveDiscounts()
 
   searchBtn.addEventListener('click', doSearch)
   searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch() })
