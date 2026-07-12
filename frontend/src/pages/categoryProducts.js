@@ -47,16 +47,20 @@ export async function renderCategoryProducts(categoryId) {
     const subcategories = category.subcategories || []
     const categoriesList = await api.getCategories()
 
-    container.querySelector('#breadcrumb-name').textContent = category.name
+    let breadcrumbHtml = `
+      <a href="/" class="hover:text-indigo-600">Головна</a>
+      <span class="mx-2">/</span>
+      <a href="/categories" class="hover:text-indigo-600">Каталог</a>
+      <span class="mx-2">/</span>`
 
     if (category.parent_category) {
-      const breadcrumb = container.querySelector('#breadcrumb')
-      const parentLink = document.createElement('span')
-      parentLink.innerHTML = `
-        <span class="mx-2">/</span>
-        <a href="/category/${category.parent_category.id}-${slugify(category.parent_category.name)}" class="hover:text-indigo-600">${escapeHtml(category.parent_category.name)}</a>`
-      breadcrumb.insertBefore(parentLink, container.querySelector('#breadcrumb-name'))
+      breadcrumbHtml += `
+        <a href="/category/${category.parent_category.id}-${slugify(category.parent_category.name)}" class="hover:text-indigo-600">${escapeHtml(category.parent_category.name)}</a>
+        <span class="mx-2">/</span>`
     }
+
+    breadcrumbHtml += `<span id="breadcrumb-name" class="text-slate-800 font-medium">${escapeHtml(category.name)}</span>`
+    container.querySelector('#breadcrumb').innerHTML = breadcrumbHtml
 
     container.querySelector('#category-header').innerHTML = `
       <h1 class="text-3xl font-bold text-slate-800">${escapeHtml(category.name)}</h1>`
