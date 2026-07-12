@@ -74,10 +74,10 @@ export async function renderHome() {
       </div>
 
       <!-- Navigation Arrows -->
-      <button id="slider-prev" class="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-slate-800 flex items-center justify-center border border-slate-200 shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-30 cursor-pointer hover:scale-110">
+      <button id="slider-prev" aria-label="Попередній слайд" class="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-slate-800 flex items-center justify-center border border-slate-200 shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-30 cursor-pointer hover:scale-110">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <button id="slider-next" class="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-slate-800 flex items-center justify-center border border-slate-200 shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-30 cursor-pointer hover:scale-110">
+      <button id="slider-next" aria-label="Наступний слайд" class="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-slate-800 flex items-center justify-center border border-slate-200 shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-30 cursor-pointer hover:scale-110">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
       </button>
 
