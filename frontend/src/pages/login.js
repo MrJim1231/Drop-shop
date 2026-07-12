@@ -7,6 +7,14 @@ export function renderLogin() {
   const container = document.createElement('div')
   container.className = 'page-enter max-w-md mx-auto px-4 py-12'
 
+  if (authStore.isLoggedIn()) {
+    setTimeout(() => {
+      window.history.pushState(null, '', '/')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    }, 0)
+    return container
+  }
+
   let mode = 'login'
   let pendingEmail = null
 
