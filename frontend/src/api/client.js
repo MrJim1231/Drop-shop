@@ -82,4 +82,12 @@ export const api = {
       method: 'POST',
       body: formData,
     }),
+
+  getCatalogs: () => request('get_uploaded_catalogs.php'),
+
+  deleteCatalog: (fileName) =>
+    request('delete_catalog.php', {
+      method: 'POST',
+      body: JSON.stringify({ fileName }),
+    }),
 }

@@ -34,10 +34,13 @@ if ($mysqli->connect_error) {
     die('<p class="err">Помилка підключення до БД: ' . htmlspecialchars($mysqli->connect_error) . '</p></body></html>');
 }
 
-$catalogFile = dirname(__DIR__, 2) . '/catalog_dropt_2026-07-12.xlsx';
+$fileName = isset($_GET['file']) ? $_GET['file'] : 'catalog_dropt_2026-07-12.xlsx';
+$fileName = basename($fileName); // Санітизація імені файлу
+
+$catalogFile = dirname(__DIR__, 2) . '/' . $fileName;
 
 if (!file_exists($catalogFile)) {
-    die('<p class="err">Файл не знайдено: catalog_dropt_2026-07-12.xlsx</p></body></html>');
+    die('<p class="err">Файл не знайдено: ' . htmlspecialchars($fileName) . '</p></body></html>');
 }
 
 if ($isReset) {

@@ -20,10 +20,12 @@ if ($fileExtension !== 'xlsx') {
     exit();
 }
 
-$destPath = dirname(__DIR__, 2) . '/catalog_dropt_2026-07-12.xlsx';
+// Санітизуємо ім'я файлу для безпеки
+$safeFileName = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $fileName);
+$destPath = dirname(__DIR__, 2) . '/' . $safeFileName;
 
 if (move_uploaded_file($fileTmpPath, $destPath)) {
-    echo json_encode(["status" => "success", "message" => "Каталог успішно завантажено"]);
+    echo json_encode(["status" => "success", "message" => "Каталог '$safeFileName' успішно завантажено"]);
 } else {
     echo json_encode(["status" => "error", "message" => "Не вдалося зберегти файл на сервері"]);
 }
