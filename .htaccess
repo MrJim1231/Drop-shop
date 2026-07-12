@@ -1,5 +1,15 @@
 RewriteEngine On
-RewriteBase /
+
+# Route home page
+RewriteRule ^$ index.php [L]
+
+# Route categories page
+RewriteRule ^categories/?$ categories.php [L]
+
+# Route product pages
+RewriteRule ^product/([a-zA-Z0-9_\-]+) product.php?id=$1 [QSA,L]
+
+# Standard SPA fallback
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
+RewriteRule . index.html [L]

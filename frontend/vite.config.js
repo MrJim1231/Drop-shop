@@ -3,6 +3,9 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [tailwindcss()],
+  build: {
+    manifest: true,
+  },
   server: {
     port: 5173,
     proxy: {
@@ -17,3 +20,4 @@ export default defineConfig({
     globals: true,
   },
 })
+
