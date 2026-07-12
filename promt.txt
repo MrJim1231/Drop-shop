@@ -14,3 +14,12 @@
 http://localhost/course__udemy/backend/scripts/import_products.php это старый скрипт , мне нужно сейчас под catalog_dropt_2026-07-12.xlsx
 
 http://localhost/course__udemy/backend/scripts/import_products.php?reset=1
+
+Новый промт
+
+запустил http://localhost/course__udemy/backend/scripts/import_products.php?reset=1 , товары добавились в базу но написано Таблиці categories, products, product_images очищено.
+
+
+Fatal error: Maximum execution time of 30 seconds exceeded in C:\Program Files\Ampps\www\course__udemy\backend\scripts\import_products.php on line 380 , плюс нужно писать сколько товаро добавилось и тд 
+
+http://localhost/course__udemy/backend/scripts/import_products.php?reset=1

@@ -1,56 +1,74 @@
 <?php
 /**
- * Імпорт товарів з Excel-файлу catalog_dropt_*.xlsx
+ * Імпорт товарів з Excel catalog_dropt_2026-07-12.xlsx
  *
- * Запуск:
- *   http://localhost/course__udemy/backend/scripts/import_products.php
- *   http://localhost/course__udemy/backend/scripts/import_products.php?reset=1  — очистити таблиці перед імпортом
+ * http://localhost/course__udemy/backend/scripts/import_products.php
+ * http://localhost/course__udemy/backend/scripts/import_products.php?reset=1
  */
 
 declare(strict_types=1);
+
+set_time_limit(0);
+ini_set('memory_limit', '512M');
 
 header('Content-Type: text/html; charset=utf-8');
 
 require_once __DIR__ . '/SimpleXlsxReader.php';
 require_once __DIR__ . '/../config.php';
 
+$startedAt = microtime(true);
+$isReset = isset($_GET['reset']);
+
+echo '<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Імпорт каталогу</title>';
+echo '<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:40px auto;padding:0 20px;color:#1e293b}';
+echo '.ok{color:#059669}.warn{color:#d97706}.err{color:#dc2626}table{border-collapse:collapse;width:100%;margin:16px 0}';
+echo 'td,th{border:1px solid #e2e8f0;padding:8px 12px;text-align:left}th{background:#f8fafc}</style></head><body>';
+echo '<h1>Імпорт каталогу DropShop</h1>';
+
+flushOutput();
+
 $mysqli = new mysqli(DB_HOSTNAME, DB_USERNAME, DB_PASSWORD, DB_DATABASE);
 $mysqli->set_charset('utf8mb4');
 
 if ($mysqli->connect_error) {
-    die('Помилка підключення до БД: ' . $mysqli->connect_error);
+    die('<p class="err">Помилка підключення до БД: ' . htmlspecialchars($mysqli->connect_error) . '</p></body></html>');
 }
 
 $catalogFile = dirname(__DIR__, 2) . '/catalog_dropt_2026-07-12.xlsx';
 
 if (!file_exists($catalogFile)) {
-    die('Файл каталогу не знайдено: catalog_dropt_2026-07-12.xlsx (має бути в корені проекту)');
+    die('<p class="err">Файл не знайдено: catalog_dropt_2026-07-12.xlsx</p></body></html>');
 }
 
-if (isset($_GET['reset'])) {
+if ($isReset) {
     $mysqli->query('SET FOREIGN_KEY_CHECKS = 0');
     $mysqli->query('TRUNCATE TABLE product_images');
     $mysqli->query('TRUNCATE TABLE products');
     $mysqli->query('TRUNCATE TABLE categories');
     $mysqli->query('SET FOREIGN_KEY_CHECKS = 1');
-    echo '<p><strong>Таблиці categories, products, product_images очищено.</strong></p>';
+    echo '<p class="warn">Таблиці <strong>categories</strong>, <strong>products</strong>, <strong>product_images</strong> очищено.</p>';
+    flushOutput();
 }
+
+echo '<p>Читаю Excel-файл...</p>';
+flushOutput();
 
 try {
     $rows = SimpleXlsxReader::readRows($catalogFile);
 } catch (Throwable $e) {
-    die('Помилка читання XLSX: ' . htmlspecialchars($e->getMessage()));
+    die('<p class="err">Помилка читання XLSX: ' . htmlspecialchars($e->getMessage()) . '</p></body></html>');
 }
 
 if (count($rows) < 2) {
-    die('Файл каталогу порожній або містить лише заголовки');
+    die('<p class="err">Файл порожній або без даних.</p></body></html>');
 }
 
 $headers = array_map('trim', $rows[0]);
 $columnMap = buildColumnMap($headers);
+$totalRows = count($rows) - 1;
 
 $stats = [
-    'total_rows' => count($rows) - 1,
+    'total_rows' => $totalRows,
     'categories_created' => 0,
     'products_added' => 0,
     'products_updated' => 0,
@@ -59,71 +77,142 @@ $stats = [
     'errors' => [],
 ];
 
-$categoryCache = loadCategoryCache($mysqli);
-$nextCategoryId = getNextCategoryId($mysqli, $categoryCache);
+$categoryCache = [];
+$nextCategoryId = 1;
 
-for ($i = 1; $i < count($rows); $i++) {
-    $row = normalizeRow($rows[$i], count($headers));
+if (!$isReset) {
+    $result = $mysqli->query('SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM categories');
+    $nextCategoryId = (int) ($result->fetch_assoc()['next_id'] ?? 1);
+    $categoryCache = loadCategoryCacheFast($mysqli);
+}
 
-    $sku = trim(getCell($row, $columnMap, 'sku'));
-    if ($sku === '') {
-        $stats['skipped']++;
-        continue;
-    }
+$upsertProduct = $mysqli->prepare(
+    'INSERT INTO products (id, group_id, category_id, name, description, price, size, availability, quantity_in_stock, weight)
+     VALUES (?, NULL, ?, ?, ?, ?, NULL, ?, ?, NULL)
+     ON DUPLICATE KEY UPDATE
+       name = VALUES(name),
+       description = VALUES(description),
+       price = VALUES(price),
+       category_id = VALUES(category_id),
+       availability = VALUES(availability),
+       quantity_in_stock = VALUES(quantity_in_stock)'
+);
 
-    $name = trim(getCell($row, $columnMap, 'name_uk'));
-    $description = trim(getCell($row, $columnMap, 'desc_uk'));
-    $price = parsePrice(getCell($row, $columnMap, 'price'));
-    $categoryPath = trim(getCell($row, $columnMap, 'category'));
-    $availabilityText = trim(getCell($row, $columnMap, 'availability'));
-    $mainImage = trim(getCell($row, $columnMap, 'main_image'));
-    $extraImages = trim(getCell($row, $columnMap, 'extra_images'));
+$insertImage = $mysqli->prepare('INSERT INTO product_images (product_id, image) VALUES (?, ?)');
+$deleteImages = $mysqli->prepare('DELETE FROM product_images WHERE product_id = ?');
 
-    if ($name === '' || $price <= 0 || $categoryPath === '') {
-        $stats['skipped']++;
-        $stats['errors'][] = "Рядок {$i}: пропущено (немає назви, ціни або категорії), SKU={$sku}";
-        continue;
-    }
+echo "<p>Імпорт {$totalRows} товарів...</p><ul id='progress'>";
+flushOutput();
 
-    $categoryId = resolveCategoryPath($mysqli, $categoryPath, $categoryCache, $nextCategoryId, $stats);
-    $availability = isAvailable($availabilityText) ? 1 : 0;
-    $quantity = $availability ? 1 : 0;
+$mysqli->begin_transaction();
 
-    $existing = findProduct($mysqli, $sku);
+try {
+    for ($i = 1; $i < count($rows); $i++) {
+        $row = normalizeRow($rows[$i], count($headers));
 
-    if ($existing === null) {
-        insertProduct($mysqli, $sku, $name, $description, $price, $categoryId, $availability, $quantity);
-        $stats['products_added']++;
-    } else {
-        updateProduct($mysqli, $sku, $name, $description, $price, $categoryId, $availability, $quantity);
-        if (
-            (float) $existing['price'] !== $price ||
-            (int) $existing['quantity_in_stock'] !== $quantity ||
-            (int) $existing['category_id'] !== $categoryId
-        ) {
+        $sku = trim(getCell($row, $columnMap, 'sku'));
+        if ($sku === '') {
+            $stats['skipped']++;
+            continue;
+        }
+
+        $name = trim(getCell($row, $columnMap, 'name_uk'));
+        $description = trim(getCell($row, $columnMap, 'desc_uk'));
+        $price = parsePrice(getCell($row, $columnMap, 'price'));
+        $categoryPath = trim(getCell($row, $columnMap, 'category'));
+        $availabilityText = trim(getCell($row, $columnMap, 'availability'));
+        $mainImage = trim(getCell($row, $columnMap, 'main_image'));
+        $extraImages = trim(getCell($row, $columnMap, 'extra_images'));
+
+        if ($name === '' || $price <= 0 || $categoryPath === '') {
+            $stats['skipped']++;
+            if (count($stats['errors']) < 50) {
+                $stats['errors'][] = "Рядок {$i}: пропущено, SKU={$sku}";
+            }
+            continue;
+        }
+
+        $categoryId = resolveCategoryPath($mysqli, $categoryPath, $categoryCache, $nextCategoryId, $stats);
+        $availability = isAvailable($availabilityText) ? 1 : 0;
+        $quantity = $availability ? 1 : 0;
+
+        $upsertProduct->bind_param('sissdii', $sku, $categoryId, $name, $description, $price, $availability, $quantity);
+        $upsertProduct->execute();
+
+        $affected = $upsertProduct->affected_rows;
+        if ($affected === 1) {
+            $stats['products_added']++;
+        } elseif ($affected === 2) {
             $stats['products_updated']++;
+        }
+
+        if (!$isReset) {
+            $deleteImages->bind_param('s', $sku);
+            $deleteImages->execute();
+        }
+
+        $images = collectImages($mainImage, $extraImages);
+        foreach ($images as $image) {
+            $insertImage->bind_param('ss', $sku, $image);
+            $insertImage->execute();
+            $stats['images_added']++;
+        }
+
+        if ($i % 200 === 0) {
+            echo '<li>Оброблено ' . $i . ' / ' . $totalRows . '...</li>';
+            flushOutput();
         }
     }
 
-    $imagesAdded = syncProductImages($mysqli, $sku, $mainImage, $extraImages);
-    $stats['images_added'] += $imagesAdded;
-
-    if ($mainImage !== '') {
-        setCategoryImageIfEmpty($mysqli, $categoryId, $mainImage);
-    }
+    $mysqli->commit();
+} catch (Throwable $e) {
+    $mysqli->rollback();
+    echo '</ul><p class="err">Помилка імпорту: ' . htmlspecialchars($e->getMessage()) . '</p></body></html>';
+    exit;
 }
 
+$upsertProduct->close();
+$insertImage->close();
+$deleteImages->close();
+
+echo '</ul><p>Оновлюю зображення категорій...</p>';
+flushOutput();
+
+$mysqli->query("
+    UPDATE categories c
+    JOIN (
+        SELECT p.category_id, MIN(pi.image) AS image
+        FROM products p
+        INNER JOIN product_images pi ON pi.product_id = p.id
+        GROUP BY p.category_id
+    ) src ON c.id = src.category_id
+    SET c.image = src.image
+    WHERE c.image IS NULL OR c.image = ''
+");
+
+$counts = $mysqli->query("
+    SELECT
+        (SELECT COUNT(*) FROM categories) AS categories_total,
+        (SELECT COUNT(*) FROM products) AS products_total,
+        (SELECT COUNT(*) FROM product_images) AS images_total
+")->fetch_assoc();
+
+$elapsed = round(microtime(true) - $startedAt, 1);
 $mysqli->close();
 
-echo '<h2>Імпорт завершено</h2>';
-echo '<ul>';
-echo '<li>Рядків у файлі: ' . $stats['total_rows'] . '</li>';
-echo '<li>Категорій створено: ' . $stats['categories_created'] . '</li>';
-echo '<li>Товарів додано: ' . $stats['products_added'] . '</li>';
-echo '<li>Товарів оновлено: ' . $stats['products_updated'] . '</li>';
-echo '<li>Зображень додано: ' . $stats['images_added'] . '</li>';
-echo '<li>Пропущено рядків: ' . $stats['skipped'] . '</li>';
-echo '</ul>';
+echo '<h2 class="ok">Імпорт завершено за ' . $elapsed . ' сек.</h2>';
+
+echo '<table><tr><th>Показник</th><th>Значення</th></tr>';
+echo '<tr><td>Рядків у Excel-файлі</td><td>' . $stats['total_rows'] . '</td></tr>';
+echo '<tr><td>Категорій створено за цей запуск</td><td>' . $stats['categories_created'] . '</td></tr>';
+echo '<tr><td><strong>Всього категорій у БД</strong></td><td><strong>' . (int) $counts['categories_total'] . '</strong></td></tr>';
+echo '<tr><td>Товарів додано</td><td class="ok">' . $stats['products_added'] . '</td></tr>';
+echo '<tr><td>Товарів оновлено</td><td>' . $stats['products_updated'] . '</td></tr>';
+echo '<tr><td><strong>Всього товарів у БД</strong></td><td><strong>' . (int) $counts['products_total'] . '</strong></td></tr>';
+echo '<tr><td>Зображень додано</td><td>' . $stats['images_added'] . '</td></tr>';
+echo '<tr><td><strong>Всього зображень у БД</strong></td><td><strong>' . (int) $counts['images_total'] . '</strong></td></tr>';
+echo '<tr><td>Пропущено рядків</td><td>' . $stats['skipped'] . '</td></tr>';
+echo '</table>';
 
 if ($stats['errors'] !== []) {
     echo '<h3>Попередження (перші 20)</h3><ul>';
@@ -134,6 +223,17 @@ if ($stats['errors'] !== []) {
 }
 
 echo '<p><a href="/course__udemy/frontend/">Перейти на сайт</a></p>';
+echo '</body></html>';
+
+// ------------------------------------------------------------------
+
+function flushOutput(): void
+{
+    if (ob_get_level() > 0) {
+        ob_flush();
+    }
+    flush();
+}
 
 function buildColumnMap(array $headers): array
 {
@@ -161,8 +261,7 @@ function buildColumnMap(array $headers): array
         }
     }
 
-    $required = ['sku', 'name_uk', 'price', 'category', 'main_image'];
-    foreach ($required as $key) {
+    foreach (['sku', 'name_uk', 'price', 'category', 'main_image'] as $key) {
         if (!isset($map[$key])) {
             throw new RuntimeException("У файлі Excel не знайдено колонку: {$key}");
         }
@@ -173,26 +272,17 @@ function buildColumnMap(array $headers): array
 
 function normalizeRow(array $row, int $expectedColumns): array
 {
-    if (count($row) >= $expectedColumns) {
-        return $row;
-    }
-
-    return array_pad($row, $expectedColumns, '');
+    return count($row) >= $expectedColumns ? $row : array_pad($row, $expectedColumns, '');
 }
 
 function getCell(array $row, array $map, string $key): string
 {
-    if (!isset($map[$key])) {
-        return '';
-    }
-
-    return $row[$map[$key]] ?? '';
+    return isset($map[$key]) ? ($row[$map[$key]] ?? '') : '';
 }
 
 function parsePrice(string $value): float
 {
-    $value = str_replace(',', '.', trim($value));
-    return round((float) $value, 2);
+    return round((float) str_replace(',', '.', trim($value)), 2);
 }
 
 function isAvailable(string $text): bool
@@ -201,58 +291,42 @@ function isAvailable(string $text): bool
     return $text === '' || str_contains($text, 'наявн') || str_contains($text, 'налич');
 }
 
-function loadCategoryCache(mysqli $mysqli): array
+function loadCategoryCacheFast(mysqli $mysqli): array
 {
-    $cache = [];
-    $result = $mysqli->query('SELECT id FROM categories');
+    $nodes = [];
+    $result = $mysqli->query('SELECT id, name, parent_id FROM categories');
 
     while ($row = $result->fetch_assoc()) {
-        $pathKey = buildCategoryPathKey((int) $row['id'], $mysqli);
-        if ($pathKey !== '') {
-            $cache[$pathKey] = (int) $row['id'];
+        $nodes[(int) $row['id']] = [
+            'name' => trim($row['name']),
+            'parent_id' => $row['parent_id'] ? (int) $row['parent_id'] : null,
+        ];
+    }
+
+    $cache = [];
+    foreach (array_keys($nodes) as $id) {
+        $path = buildPathFromNodes($id, $nodes);
+        if ($path !== '') {
+            $cache[$path] = $id;
         }
     }
 
     return $cache;
 }
 
-function buildCategoryPathKey(int $categoryId, mysqli $mysqli): string
+function buildPathFromNodes(int $categoryId, array $nodes): string
 {
     $parts = [];
     $currentId = $categoryId;
     $guard = 0;
 
-    while ($currentId !== 0 && $guard < 20) {
-        $stmt = $mysqli->prepare('SELECT id, name, parent_id FROM categories WHERE id = ?');
-        $stmt->bind_param('i', $currentId);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        if (!$row) {
-            break;
-        }
-
-        array_unshift($parts, trim($row['name']));
-        $currentId = $row['parent_id'] ? (int) $row['parent_id'] : 0;
+    while (isset($nodes[$currentId]) && $guard < 20) {
+        array_unshift($parts, $nodes[$currentId]['name']);
+        $currentId = $nodes[$currentId]['parent_id'] ?? 0;
         $guard++;
     }
 
     return implode(' | ', $parts);
-}
-
-function getNextCategoryId(mysqli $mysqli, array $cache): int
-{
-    $result = $mysqli->query('SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM categories');
-    $row = $result->fetch_assoc();
-    $maxFromDb = (int) ($row['next_id'] ?? 1);
-
-    $maxFromCache = 0;
-    foreach ($cache as $id) {
-        $maxFromCache = max($maxFromCache, $id);
-    }
-
-    return max($maxFromDb, $maxFromCache + 1);
 }
 
 function resolveCategoryPath(
@@ -272,6 +346,8 @@ function resolveCategoryPath(
     $pathSoFar = '';
     $categoryId = 0;
 
+    $stmt = $mysqli->prepare('INSERT INTO categories (id, name, parent_id) VALUES (?, ?, ?)');
+
     foreach ($parts as $part) {
         $pathSoFar = $pathSoFar === '' ? $part : $pathSoFar . ' | ' . $part;
 
@@ -282,70 +358,20 @@ function resolveCategoryPath(
         }
 
         $categoryId = $nextCategoryId++;
-        $stmt = $mysqli->prepare('INSERT INTO categories (id, name, parent_id) VALUES (?, ?, ?)');
         $stmt->bind_param('isi', $categoryId, $part, $parentId);
         $stmt->execute();
-        $stmt->close();
 
         $cache[$pathSoFar] = $categoryId;
         $stats['categories_created']++;
         $parentId = $categoryId;
     }
 
+    $stmt->close();
+
     return $categoryId;
 }
 
-function findProduct(mysqli $mysqli, string $sku): ?array
-{
-    $stmt = $mysqli->prepare('SELECT id, price, quantity_in_stock, category_id FROM products WHERE id = ?');
-    $stmt->bind_param('s', $sku);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-
-    return $row ?: null;
-}
-
-function insertProduct(
-    mysqli $mysqli,
-    string $sku,
-    string $name,
-    string $description,
-    float $price,
-    int $categoryId,
-    int $availability,
-    int $quantity
-): void {
-    $stmt = $mysqli->prepare(
-        'INSERT INTO products (id, group_id, category_id, name, description, price, size, availability, quantity_in_stock, weight)
-         VALUES (?, NULL, ?, ?, ?, ?, NULL, ?, ?, NULL)'
-    );
-    $stmt->bind_param('sissdii', $sku, $categoryId, $name, $description, $price, $availability, $quantity);
-    $stmt->execute();
-    $stmt->close();
-}
-
-function updateProduct(
-    mysqli $mysqli,
-    string $sku,
-    string $name,
-    string $description,
-    float $price,
-    int $categoryId,
-    int $availability,
-    int $quantity
-): void {
-    $stmt = $mysqli->prepare(
-        'UPDATE products
-         SET name = ?, description = ?, price = ?, category_id = ?, availability = ?, quantity_in_stock = ?
-         WHERE id = ?'
-    );
-    $stmt->bind_param('ssdiids', $name, $description, $price, $categoryId, $availability, $quantity, $sku);
-    $stmt->execute();
-    $stmt->close();
-}
-
-function syncProductImages(mysqli $mysqli, string $sku, string $mainImage, string $extraImages): int
+function collectImages(string $mainImage, string $extraImages): array
 {
     $images = [];
 
@@ -362,35 +388,5 @@ function syncProductImages(mysqli $mysqli, string $sku, string $mainImage, strin
         }
     }
 
-    $stmt = $mysqli->prepare('DELETE FROM product_images WHERE product_id = ?');
-    $stmt->bind_param('s', $sku);
-    $stmt->execute();
-    $stmt->close();
-
-    if ($images === []) {
-        return 0;
-    }
-
-    $insert = $mysqli->prepare('INSERT INTO product_images (product_id, image) VALUES (?, ?)');
-    $added = 0;
-
-    foreach ($images as $image) {
-        $insert->bind_param('ss', $sku, $image);
-        $insert->execute();
-        $added++;
-    }
-
-    $insert->close();
-
-    return $added;
-}
-
-function setCategoryImageIfEmpty(mysqli $mysqli, int $categoryId, string $image): void
-{
-    $stmt = $mysqli->prepare(
-        'UPDATE categories SET image = ? WHERE id = ? AND (image IS NULL OR image = \'\')'
-    );
-    $stmt->bind_param('si', $image, $categoryId);
-    $stmt->execute();
-    $stmt->close();
+    return $images;
 }
