@@ -8,6 +8,7 @@ import { renderCart } from './pages/cart.js'
 import { renderLogin } from './pages/login.js'
 import { renderOrders } from './pages/orders.js'
 import { renderProfile } from './pages/profile.js'
+import { renderAdmin } from './pages/admin.js'
 
 const routes = {
   '/': () => renderHome(),
@@ -18,6 +19,7 @@ const routes = {
   '/login': () => renderLogin(),
   '/orders': () => renderOrders(),
   '/profile': () => renderProfile(),
+  '/admin': () => renderAdmin(),
 }
 
 export function navigateTo(path) {

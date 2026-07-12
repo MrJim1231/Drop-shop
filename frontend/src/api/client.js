@@ -4,7 +4,7 @@ async function request(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`
   const headers = { ...options.headers }
 
-  if (options.body) {
+  if (options.body && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json'
   }
 
@@ -75,5 +75,11 @@ export const api = {
     request('update_profile.php', {
       method: 'POST',
       body: JSON.stringify(data),
+    }),
+
+  uploadCatalog: (formData) =>
+    request('upload_catalog.php', {
+      method: 'POST',
+      body: formData,
     }),
 }
