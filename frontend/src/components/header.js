@@ -82,6 +82,17 @@ export function renderHeader() {
               ? `<button id="logout-btn" class="text-sm text-slate-400 hover:text-red-500 transition-colors hidden sm:block px-2 py-1">Вийти</button>`
               : `<a href="/login" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors hidden sm:block px-3 py-2 hover:bg-indigo-50 rounded-xl">Увійти</a>`
             }
+            
+            <!-- Theme Toggle -->
+            <button id="theme-toggle" class="p-2.5 rounded-xl hover:bg-slate-100 transition-all duration-200 text-slate-500 hover:text-slate-700 cursor-pointer" aria-label="Змінити тему">
+              <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728A9 9 0 015.636 5.636z"/>
+              </svg>
+              <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+              </svg>
+            </button>
+
             <a href="/cart" class="relative p-2.5 rounded-xl hover:bg-slate-100 transition-all duration-200 group" aria-label="Кошик">
               <svg class="w-5 h-5 text-slate-500 group-hover:text-slate-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
@@ -123,6 +134,29 @@ export function renderHeader() {
 }
 
 export function bindHeaderEvents() {
+  const themeToggle = document.getElementById('theme-toggle')
+  const lightIcon = document.getElementById('theme-toggle-light-icon')
+  const darkIcon = document.getElementById('theme-toggle-dark-icon')
+
+  const updateThemeUI = () => {
+    const isDark = document.documentElement.classList.contains('dark')
+    if (isDark) {
+      lightIcon?.classList.remove('hidden')
+      darkIcon?.classList.add('hidden')
+    } else {
+      lightIcon?.classList.add('hidden')
+      darkIcon?.classList.remove('hidden')
+    }
+  }
+
+  updateThemeUI()
+
+  themeToggle?.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.toggle('dark')
+    localStorage.setItem('theme', isDark ? 'dark' : 'light')
+    updateThemeUI()
+  })
+
   document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
     document.getElementById('mobile-menu')?.classList.toggle('hidden')
   })
