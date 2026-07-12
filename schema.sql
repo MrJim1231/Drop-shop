@@ -52,10 +52,14 @@ CREATE TABLE users (
   is_verified       TINYINT(1) NOT NULL DEFAULT 0,
   reset_token       VARCHAR(64) DEFAULT NULL,
   reset_expiry      INT DEFAULT NULL,
+  name              VARCHAR(255) DEFAULT NULL,
+  phone             VARCHAR(50) DEFAULT NULL,
+  address           TEXT DEFAULT NULL,
   created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_users_email (email),
   INDEX idx_users_reset_token (reset_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- 5. Заказы
 CREATE TABLE orders (

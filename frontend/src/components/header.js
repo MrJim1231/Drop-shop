@@ -17,7 +17,10 @@ export function renderHeader() {
           <nav class="hidden md:flex items-center gap-6">
             <a href="/" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Головна</a>
             <a href="/categories" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Каталог</a>
-            ${isLoggedIn ? `<a href="/orders" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Мої замовлення</a>` : ''}
+            ${isLoggedIn ? `
+              <a href="/orders" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Мої замовлення</a>
+              <a href="/profile" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Профіль</a>
+            ` : ''}
           </nav>
 
           <div class="flex items-center gap-3">
@@ -45,6 +48,7 @@ export function renderHeader() {
             <a href="/categories" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Каталог</a>
             ${isLoggedIn
               ? `<a href="/orders" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Мої замовлення</a>
+                 <a href="/profile" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Профіль</a>
                  <button id="mobile-logout-btn" class="px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 text-left">Вийти</button>`
               : `<a href="/login" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Увійти</a>`
             }

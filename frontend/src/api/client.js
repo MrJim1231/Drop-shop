@@ -68,4 +68,12 @@ export const api = {
     }),
 
   getOrders: (userId) => request(`get_orders.php?userId=${userId}`),
+
+  getProfile: (userId) => request(`get_profile.php?userId=${userId}`),
+
+  updateProfile: (data) =>
+    request('update_profile.php', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 }

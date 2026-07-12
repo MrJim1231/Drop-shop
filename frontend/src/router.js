@@ -7,6 +7,7 @@ import { renderProductDetail } from './pages/productDetail.js'
 import { renderCart } from './pages/cart.js'
 import { renderLogin } from './pages/login.js'
 import { renderOrders } from './pages/orders.js'
+import { renderProfile } from './pages/profile.js'
 
 const routes = {
   '/': () => renderHome(),
@@ -16,6 +17,7 @@ const routes = {
   '/cart': () => renderCart(),
   '/login': () => renderLogin(),
   '/orders': () => renderOrders(),
+  '/profile': () => renderProfile(),
 }
 
 export function navigateTo(path) {
