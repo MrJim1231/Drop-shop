@@ -9,7 +9,7 @@ if (!$userId) {
     exit();
 }
 
-$sql = "SELECT email, name, phone, address FROM users WHERE id = ?";
+$sql = "SELECT email, name, phone, address, is_admin FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $userId);
 $stmt->execute();

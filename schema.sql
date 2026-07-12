@@ -55,6 +55,7 @@ CREATE TABLE users (
   password          VARCHAR(255) NOT NULL,
   verification_code VARCHAR(6) NOT NULL DEFAULT '000000',
   is_verified       TINYINT(1) NOT NULL DEFAULT 0,
+  is_admin          TINYINT(1) NOT NULL DEFAULT 0,
   reset_token       VARCHAR(64) DEFAULT NULL,
   reset_expiry      INT DEFAULT NULL,
   name              VARCHAR(255) DEFAULT NULL,

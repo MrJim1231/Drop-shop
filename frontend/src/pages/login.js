@@ -79,7 +79,7 @@ export function renderLogin() {
         if (mode === 'verify') {
           const result = await api.verifyEmail(pendingEmail, fd.get('code'))
           if (result.status === 'success') {
-            authStore.login(result.token, result.userId)
+            authStore.login(result.token, result.userId, result.isAdmin)
             showToast('Email підтверджено!')
             window.history.pushState(null, '', '/')
             window.dispatchEvent(new PopStateEvent('popstate'))
@@ -89,7 +89,7 @@ export function renderLogin() {
         } else if (mode === 'login') {
           const result = await api.login(fd.get('email'), fd.get('password'))
           if (result.status === 'success') {
-            authStore.login(result.token, result.userId)
+            authStore.login(result.token, result.userId, result.isAdmin)
             showToast('Вітаємо!')
             window.history.pushState(null, '', '/')
             window.dispatchEvent(new PopStateEvent('popstate'))

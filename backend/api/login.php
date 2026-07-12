@@ -22,7 +22,7 @@ if (!isset($data['email']) || !isset($data['password'])) {
 $email = trim($data['email']);
 $password = trim($data['password']);
 
-$sql_check = "SELECT id, password, is_verified FROM users WHERE email = ?";
+$sql_check = "SELECT id, password, is_verified, is_admin FROM users WHERE email = ?";
 $stmt_check = $conn->prepare($sql_check);
 $stmt_check->bind_param("s", $email);
 $stmt_check->execute();
@@ -33,7 +33,7 @@ if ($stmt_check->num_rows == 0) {
     exit();
 }
 
-$stmt_check->bind_result($user_id, $hashed_password, $is_verified);
+$stmt_check->bind_result($user_id, $hashed_password, $is_verified, $is_admin);
 $stmt_check->fetch();
 
 // Якщо пароль невірний
@@ -80,7 +80,8 @@ $expiration_time = $issued_at + 3600;
 $payload = [
     "iat" => $issued_at,
     "exp" => $expiration_time,
-    "user_id" => $user_id
+    "user_id" => $user_id,
+    "is_admin" => (bool)$is_admin
 ];
 
 $jwt = JWT::encode($payload, $secret_key, 'HS256');
@@ -89,7 +90,8 @@ echo json_encode([
     "status" => "success",
     "message" => "Авторизація успішна",
     "token" => $jwt,
-    "userId" => $user_id
+    "userId" => $user_id,
+    "isAdmin" => (bool)$is_admin
 ]);
 
 $stmt_check->close();

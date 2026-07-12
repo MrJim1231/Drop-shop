@@ -1,6 +1,9 @@
 import { cartStore } from '../store/cart.js'
 import { authStore } from '../store/auth.js'
+import { api } from '../api/client.js'
 import { escapeHtml, slugify } from '../utils.js'
+
+let adminStatusSynced = false
 
 export function renderHeader() {
   const cartCount = cartStore.getCount()
@@ -12,6 +15,30 @@ export function renderHeader() {
   const isOrdersActive = path === '/orders'
   const isProfileActive = path === '/profile'
   const isAdminActive = path === '/admin'
+  const isAdmin = authStore.isAdmin()
+
+  if (isLoggedIn && !adminStatusSynced) {
+    const userId = authStore.getUserId()
+    if (userId) {
+      adminStatusSynced = true
+      api.getProfile(userId)
+        .then(res => {
+          if (res && res.status === 'success' && res.data) {
+            const isUserAdmin = res.data.is_admin === 1 || res.data.is_admin === '1' || res.data.is_admin === true
+            const currentStored = localStorage.getItem('isAdmin') === 'true'
+            
+            if (isUserAdmin !== currentStored) {
+              localStorage.setItem('isAdmin', isUserAdmin ? 'true' : 'false')
+              window.dispatchEvent(new CustomEvent('auth-updated'))
+            }
+          }
+        })
+        .catch(err => {
+          adminStatusSynced = false
+          console.error("Error syncing admin status:", err)
+        })
+    }
+  }
 
   const navLink = (href, label, isActive) =>
     `<a href="${href}" class="relative text-sm font-medium px-1 py-1 transition-colors duration-200 ${isActive ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-900'}">${label}${isActive ? '<span class="absolute -bottom-3 left-0 right-0 h-0.5 bg-indigo-600 rounded-full"></span>' : ''}</a>`
@@ -46,7 +73,7 @@ export function renderHeader() {
             ${isLoggedIn ? `
               ${navLink('/orders', 'Замовлення', isOrdersActive)}
               ${navLink('/profile', 'Профіль', isProfileActive)}
-              ${navLink('/admin', 'Адмінка', isAdminActive)}
+              ${isAdmin ? navLink('/admin', 'Адмінка', isAdminActive) : ''}
             ` : ''}
           </nav>
  
@@ -68,7 +95,7 @@ export function renderHeader() {
             </button>
           </div>
         </div>
-
+ 
         <div id="mobile-menu" class="hidden md:hidden pb-4 border-t border-slate-100 pt-3">
           <form id="mobile-search-form" class="relative mb-3 px-1">
             <input type="search" id="mobile-search-input" placeholder="Пошук товарів..."
@@ -85,14 +112,13 @@ export function renderHeader() {
             ${isLoggedIn
               ? `<a href="/orders" class="px-3 py-2 rounded-xl text-sm font-medium ${isOrdersActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 hover:bg-slate-50'}">Замовлення</a>
                  <a href="/profile" class="px-3 py-2 rounded-xl text-sm font-medium ${isProfileActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 hover:bg-slate-50'}">Профіль</a>
-                 <a href="/admin" class="px-3 py-2 rounded-xl text-sm font-medium ${isAdminActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-indigo-600 hover:bg-indigo-50'}">Адмінка</a>
+                 ${isAdmin ? `<a href="/admin" class="px-3 py-2 rounded-xl text-sm font-medium ${isAdminActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-indigo-600 hover:bg-indigo-50'}">Адмінка</a>` : ''}
                  <button id="mobile-logout-btn" class="px-3 py-2 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 text-left">Вийти</button>`
               : `<a href="/login" class="px-3 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50">Увійти</a>`
             }
           </nav>
         </div>
       </div>
-    </header>
     </header>`
 }
 
