@@ -9,16 +9,89 @@
   --color-brand-700: #4338ca;
 }
 
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-white text-slate-900 antialiased;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 #app {
   @apply min-h-screen flex flex-col;
+}
+
+
+/* ==========================================================================
+   Premium Background — subtle mesh gradient
+   ========================================================================== */
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 600px;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(139, 92, 246, 0.04), transparent);
+  pointer-events: none;
+}
+
+
+/* ==========================================================================
+   Premium Typography
+   ========================================================================== */
+
+h1, h2, h3 {
+  letter-spacing: -0.025em;
+}
+
+
+/* ==========================================================================
+   Card System — unified premium card with subtle hover lift
+   ========================================================================== */
+
+.premium-card {
+  @apply bg-white rounded-2xl border border-slate-100 transition-all duration-300;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.premium-card:hover {
+  @apply border-slate-200;
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(99, 102, 241, 0.06);
+  transform: translateY(-2px);
+}
+
+
+/* ==========================================================================
+   Product Cards — enhanced hover + image zoom
+   ========================================================================== */
+
+.product-card {
+  @apply transition-all duration-300;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.product-card:hover {
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(99, 102, 241, 0.08);
+  transform: translateY(-4px);
+}
+
+.product-card:hover .product-image {
+  @apply scale-110;
+}
+
+.product-image {
+  @apply transition-transform duration-500;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .line-clamp-2 {
@@ -28,19 +101,182 @@ body {
   overflow: hidden;
 }
 
-.product-card:hover .product-image {
-  @apply scale-105;
+
+/* ==========================================================================
+   Category Cards — hover glow ring
+   ========================================================================== */
+
+a.group {
+  @apply transition-all duration-300;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.product-image {
-  @apply transition-transform duration-300;
+a.group:hover {
+  box-shadow: 0 20px 40px -12px rgba(79, 70, 229, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.1);
+  transform: translateY(-3px);
 }
+
+
+/* ==========================================================================
+   Header — frosted glass navbar
+   ========================================================================== */
+
+header {
+  @apply backdrop-blur-xl;
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+
+/* ==========================================================================
+   Buttons — enhanced with micro-interactions
+   ========================================================================== */
+
+/* Primary CTA buttons */
+.bg-indigo-600 {
+  @apply transition-all duration-200;
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3), 0 1px 2px rgba(79, 70, 229, 0.2);
+}
+
+.bg-indigo-600:hover {
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4), 0 2px 4px rgba(79, 70, 229, 0.2);
+  transform: translateY(-1px);
+}
+
+.bg-indigo-600:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);
+}
+
+
+/* ==========================================================================
+   Form Inputs — premium feel
+   ========================================================================== */
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="number"]),
+textarea,
+select {
+  @apply transition-all duration-200;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus,
+select:focus {
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .page-enter {
-  animation: fade-in 0.25s ease-out;
+  animation: fade-in 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+
+/* ==========================================================================
+   Stagger delays for grid children
+   ========================================================================== */
+
+.stagger-grid > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-grid > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-grid > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-grid > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-grid > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-grid > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-grid > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-grid > *:nth-child(8) { animation-delay: 350ms; }
+
+
+/* ==========================================================================
+   Scrollbar
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+
+/* ==========================================================================
+   Toast
+   ========================================================================== */
+
+#toast {
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.2);
+}
+
+
+/* ==========================================================================
+   Selection color
+   ========================================================================== */
+
+::selection {
+  background-color: rgba(99, 102, 241, 0.15);
+  color: inherit;
+}
+
+
+/* ==========================================================================
+   Sidebar drawer overlay
+   ========================================================================== */
+
+#catalog-drawer {
+  box-shadow: 20px 0 60px -10px rgba(0, 0, 0, 0.15);
+}
+
+
+/* ==========================================================================
+   Pagination active page glow
+   ========================================================================== */
+
+nav[aria-label="Pagination"] .bg-indigo-600 {
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+}
+
+
+/* ==========================================================================
+   Admin table rows
+   ========================================================================== */
+
+table tr:hover td {
+  @apply bg-indigo-50/40;
 }

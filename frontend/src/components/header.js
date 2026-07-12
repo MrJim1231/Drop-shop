@@ -16,30 +16,32 @@ export function renderHeader() {
   const isProfileActive = path === '/profile'
   const isAdminActive = path === '/admin'
 
+  const navLink = (href, label, isActive) =>
+    `<a href="${href}" class="relative text-sm font-medium px-1 py-1 transition-colors duration-200 ${isActive ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-900'}">${label}${isActive ? '<span class="absolute -bottom-3 left-0 right-0 h-0.5 bg-indigo-600 rounded-full"></span>' : ''}</a>`
+
   return `
-    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
+    <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-slate-200/60">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
-          <div class="flex items-center gap-4">
-            <a href="/" class="flex items-center gap-2 group flex-shrink-0">
-              <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg group-hover:bg-indigo-700 transition-colors">D</div>
-              <span class="font-bold text-xl text-slate-800 hidden sm:block">DropShop</span>
+          <div class="flex items-center gap-5">
+            <a href="/" class="flex items-center gap-2.5 group flex-shrink-0">
+              <div class="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-extrabold text-base shadow-lg shadow-indigo-200/50 group-hover:shadow-indigo-300/60 group-hover:scale-105 transition-all duration-200">D</div>
+              <span class="font-extrabold text-lg text-slate-900 hidden sm:block tracking-tight">Drop<span class="text-indigo-600">Shop</span></span>
             </a>
 
-            <!-- Кнопка Каталог (як на Розетка) -->
-            <button type="button" id="catalog-drawer-btn" class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
-              <span>☰</span>
+            <button type="button" id="catalog-drawer-btn" class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 font-semibold rounded-xl text-sm transition-all duration-200 cursor-pointer group">
+              <svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
               <span>Каталог</span>
             </button>
           </div>
 
-          <!-- Пошук товарів (десктоп) -->
-          <div class="flex-1 max-w-md mx-8 hidden md:block">
-            <form id="search-form" class="relative">
-              <input type="search" id="search-input" placeholder="Пошук товарів за назвою..."
-                class="w-full pl-10 pr-4 py-2 bg-slate-100 focus:bg-white border border-transparent focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 rounded-xl text-sm outline-none transition-all font-normal text-slate-700" />
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Search -->
+          <div class="flex-1 max-w-md mx-6 hidden md:block">
+            <form id="search-form" class="relative group">
+              <input type="search" id="search-input" placeholder="Пошук товарів..."
+                class="w-full pl-11 pr-4 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50 rounded-xl text-sm outline-none transition-all duration-200 text-slate-700 placeholder:text-slate-400" />
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <svg class="h-4.5 w-4.5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
               </div>
@@ -47,28 +49,28 @@ export function renderHeader() {
           </div>
 
           <nav class="hidden md:flex items-center gap-6 flex-shrink-0">
-            <a href="/" class="text-sm font-medium transition-colors ${isHomeActive ? 'text-indigo-600 font-bold' : 'text-slate-600 hover:text-indigo-600'}">Головна</a>
-            <a href="/categories" class="text-sm font-medium transition-colors ${isCatalogActive ? 'text-indigo-600 font-bold' : 'text-slate-600 hover:text-indigo-600'}">Каталог</a>
+            ${navLink('/', 'Головна', isHomeActive)}
+            ${navLink('/categories', 'Каталог', isCatalogActive)}
             ${isLoggedIn ? `
-              <a href="/orders" class="text-sm font-medium transition-colors ${isOrdersActive ? 'text-indigo-600 font-bold' : 'text-slate-600 hover:text-indigo-600'}">Мої замовлення</a>
-              <a href="/profile" class="text-sm font-medium transition-colors ${isProfileActive ? 'text-indigo-600 font-bold' : 'text-slate-600 hover:text-indigo-600'}">Профіль</a>
-              <a href="/admin" class="text-sm font-medium transition-colors ${isAdminActive ? 'text-indigo-600 font-bold' : 'text-indigo-600 hover:text-indigo-700 font-semibold'}">Адмінка</a>
+              ${navLink('/orders', 'Замовлення', isOrdersActive)}
+              ${navLink('/profile', 'Профіль', isProfileActive)}
+              ${navLink('/admin', 'Адмінка', isAdminActive)}
             ` : ''}
           </nav>
  
-          <div class="flex items-center gap-3 flex-shrink-0">
+          <div class="flex items-center gap-2 flex-shrink-0 ml-4">
             ${isLoggedIn
-              ? `<button id="logout-btn" class="text-sm text-slate-600 hover:text-red-600 transition-colors hidden sm:block">Вийти</button>`
-              : `<a href="/login" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors hidden sm:block">Увійти</a>`
+              ? `<button id="logout-btn" class="text-sm text-slate-400 hover:text-red-500 transition-colors hidden sm:block px-2 py-1">Вийти</button>`
+              : `<a href="/login" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors hidden sm:block px-3 py-2 hover:bg-indigo-50 rounded-xl">Увійти</a>`
             }
-            <a href="/cart" class="relative p-2 rounded-xl hover:bg-slate-100 transition-colors" aria-label="Кошик">
-              <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            <a href="/cart" class="relative p-2.5 rounded-xl hover:bg-slate-100 transition-all duration-200 group" aria-label="Кошик">
+              <svg class="w-5 h-5 text-slate-500 group-hover:text-slate-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
               </svg>
-              ${cartCount > 0 ? `<span class="absolute -top-0.5 -right-0.5 bg-indigo-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">${cartCount}</span>` : ''}
+              ${cartCount > 0 ? `<span class="absolute top-1 right-1 bg-indigo-600 text-white text-[10px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-bold shadow-sm shadow-indigo-200">${cartCount}</span>` : ''}
             </a>
-            <button id="mobile-menu-btn" class="md:hidden p-2 rounded-xl hover:bg-slate-100">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button id="mobile-menu-btn" class="md:hidden p-2 rounded-xl hover:bg-slate-100 transition-colors">
+              <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
               </svg>
             </button>
@@ -76,39 +78,40 @@ export function renderHeader() {
         </div>
 
         <div id="mobile-menu" class="hidden md:hidden pb-4 border-t border-slate-100 pt-3">
-          <!-- Пошук товарів (мобільний) -->
           <form id="mobile-search-form" class="relative mb-3 px-1">
             <input type="search" id="mobile-search-input" placeholder="Пошук товарів..."
-              class="w-full pl-10 pr-4 py-2 bg-slate-100 border border-transparent focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 rounded-xl text-sm outline-none transition-all font-normal text-slate-700" />
+              class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 rounded-xl text-sm outline-none transition-all text-slate-700" />
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
             </div>
           </form>
-          <nav class="flex flex-col gap-2">
-            <a href="/" class="px-3 py-2 rounded-lg text-sm font-medium ${isHomeActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 hover:bg-slate-100'}">Головна</a>
-            <a href="/categories" class="px-3 py-2 rounded-lg text-sm font-medium ${isCatalogActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 hover:bg-slate-100'}">Каталог</a>
+          <nav class="flex flex-col gap-1">
+            <a href="/" class="px-3 py-2 rounded-xl text-sm font-medium ${isHomeActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 hover:bg-slate-50'}">Головна</a>
+            <a href="/categories" class="px-3 py-2 rounded-xl text-sm font-medium ${isCatalogActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 hover:bg-slate-50'}">Каталог</a>
             ${isLoggedIn
-              ? `<a href="/orders" class="px-3 py-2 rounded-lg text-sm font-medium ${isOrdersActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 hover:bg-slate-100'}">Мої замовлення</a>
-                 <a href="/profile" class="px-3 py-2 rounded-lg text-sm font-medium ${isProfileActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 hover:bg-slate-100'}">Профіль</a>
-                 <a href="/admin" class="px-3 py-2 rounded-lg text-sm font-medium ${isAdminActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-indigo-600 hover:bg-indigo-50'}">Адмінка</a>
-                 <button id="mobile-logout-btn" class="px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 text-left">Вийти</button>`
-              : `<a href="/login" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Увійти</a>`
+              ? `<a href="/orders" class="px-3 py-2 rounded-xl text-sm font-medium ${isOrdersActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 hover:bg-slate-50'}">Замовлення</a>
+                 <a href="/profile" class="px-3 py-2 rounded-xl text-sm font-medium ${isProfileActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 hover:bg-slate-50'}">Профіль</a>
+                 <a href="/admin" class="px-3 py-2 rounded-xl text-sm font-medium ${isAdminActive ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-indigo-600 hover:bg-indigo-50'}">Адмінка</a>
+                 <button id="mobile-logout-btn" class="px-3 py-2 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 text-left">Вийти</button>`
+              : `<a href="/login" class="px-3 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50">Увійти</a>`
             }
           </nav>
         </div>
       </div>
     </header>
 
-    <!-- Висувний Сайдбар Каталогу (як на Розетка) -->
-    <div id="catalog-drawer-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden transition-opacity duration-300 opacity-0">
-      <div id="catalog-drawer" class="fixed inset-y-0 left-0 w-80 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out p-6 flex flex-col">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
-          <h3 class="font-bold text-slate-800 text-lg">Каталог товарів</h3>
-          <button type="button" id="close-drawer-btn" class="text-slate-400 hover:text-slate-600 text-2xl font-bold p-1 cursor-pointer">✕</button>
+    <!-- Catalog Drawer -->
+    <div id="catalog-drawer-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden transition-opacity duration-300 opacity-0">
+      <div id="catalog-drawer" class="fixed inset-y-0 left-0 w-80 bg-white z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <h3 class="font-bold text-slate-900 text-base">Каталог товарів</h3>
+          <button type="button" id="close-drawer-btn" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
-        <div class="flex-1 overflow-y-auto pr-1" id="drawer-categories-list">
+        <div class="flex-1 overflow-y-auto p-4" id="drawer-categories-list">
           <div class="flex justify-center py-12">
             <div class="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
           </div>
@@ -180,11 +183,11 @@ export function bindHeaderEvents() {
     }
 
     categoriesListEl.innerHTML = `
-      <ul class="space-y-1">
+      <ul class="space-y-0.5">
         ${filtered.map((cat) => `
           <li>
-            <a href="/category/${cat.id}-${slugify(cat.name)}" class="drawer-link flex items-center gap-3 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-xl transition-all">
-              <span>📁</span>
+            <a href="/category/${cat.id}-${slugify(cat.name)}" class="drawer-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 rounded-xl transition-all duration-150">
+              <span class="text-base">📁</span>
               <span class="truncate">${escapeHtml(cat.name)}</span>
             </a>
           </li>
