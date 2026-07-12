@@ -1,8 +1,13 @@
 <?php
 /**
- * Імпорт товарів з XML/YML за посиланням
+ * Імпорт товарів з XML/YML за посиланням (opt-drop та сумісні формати)
  *
- * http://localhost/course__udemy/backend/scripts/import_xml.php?url=...
+ * Категорії беруться 1:1 з XML з урахуванням ієрархії (parentId).
+ * Товари отримують свій оригінальний categoryId з XML.
+ *
+ * http://localhost/course__udemy/backend/scripts/import_xml.php?url=https://opt-drop.com/storage/xml/opt-drop-0.xml
+ * http://localhost/course__udemy/backend/scripts/import_xml.php?url=...&reset=1
+ * http://localhost/course__udemy/backend/scripts/import_xml.php?url=...&reset=1&markup=20
  */
 
 declare(strict_types=1);
@@ -16,8 +21,8 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/category_helpers.php';
 
 $startedAt = microtime(true);
-$isReset = isset($_GET['reset']);
-$url = isset($_GET['url']) ? trim($_GET['url']) : '';
+$isReset   = isset($_GET['reset']);
+$url       = isset($_GET['url']) ? trim($_GET['url']) : '';
 
 echo '<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Імпорт XML каталогу</title>';
 echo '<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:40px auto;padding:0 20px;color:#1e293b}';
@@ -46,14 +51,7 @@ if ($mysqli->connect_error) {
     die('<p class="err">Помилка підключення до БД: ' . htmlspecialchars($mysqli->connect_error) . '</p></body></html>');
 }
 
-// Записуємо 20 зумовлених базових категорій
-foreach ($predefinedRoots as $rootId => $rootName) {
-    $stmt = $mysqli->prepare('INSERT INTO categories (id, name, parent_id) VALUES (?, ?, NULL) ON DUPLICATE KEY UPDATE name = VALUES(name)');
-    $stmt->bind_param('is', $rootId, $rootName);
-    $stmt->execute();
-    $stmt->close();
-}
-
+// --- Reset ---
 if ($isReset) {
     $mysqli->query('SET FOREIGN_KEY_CHECKS = 0');
     $mysqli->query('TRUNCATE TABLE product_images');
@@ -64,13 +62,13 @@ if ($isReset) {
     flushOutput();
 }
 
-echo '<p>Завантажую XML файл за посиланням: <strong>' . htmlspecialchars($url) . '</strong>...</p>';
+echo '<p>Завантажую XML файл: <strong>' . htmlspecialchars($url) . '</strong>...</p>';
 flushOutput();
 
-// Завантажуємо XML контент
+// --- Завантажуємо XML ---
 $xmlContent = file_get_contents($url);
 if ($xmlContent === false) {
-    die('<p class="err">Помилка: не вдалося завантажити XML файл за вказаним посиланням.</p></body></html>');
+    die('<p class="err">Помилка: не вдалося завантажити XML файл. Перевірте посилання та доступ до інтернету.</p></body></html>');
 }
 
 echo '<p>Аналізую XML структуру...</p>';
@@ -79,7 +77,7 @@ flushOutput();
 try {
     $xml = simplexml_load_string($xmlContent);
     if ($xml === false) {
-        throw new RuntimeException("Невірний формат XML.");
+        throw new RuntimeException('Невірний формат XML.');
     }
 } catch (Throwable $e) {
     die('<p class="err">Помилка парсингу XML: ' . htmlspecialchars($e->getMessage()) . '</p></body></html>');
@@ -91,59 +89,60 @@ flushOutput();
 
 $stats = [
     'categories_created' => 0,
-    'products_added' => 0,
-    'products_updated' => 0,
-    'images_added' => 0,
-    'skipped' => 0,
-    'errors' => [],
+    'products_added'     => 0,
+    'products_updated'   => 0,
+    'images_added'       => 0,
+    'skipped'            => 0,
+    'errors'             => [],
 ];
 
-// --- 1. ІМПОРТ КАТЕГОРІЙ ---
-$categories = $xml->shop->categories->category ?? [];
-$totalCats = count($categories);
-echo "<p>Імпорт {$totalCats} категорій...</p>";
+// -----------------------------------------------------------------------
+// --- 1. ІМПОРТ КАТЕГОРІЙ з XML (1:1, зі збереженням ієрархії) ---
+// -----------------------------------------------------------------------
+$xmlCategories = $xml->shop->categories->category ?? [];
+$totalCats     = count($xmlCategories);
+echo "<p>Імпорт {$totalCats} категорій з XML...</p>";
 flushOutput();
 
+// Вимикаємо FK щоб вставляти в будь-якому порядку (дочірні можуть бути раніше батьків)
 $mysqli->query('SET FOREIGN_KEY_CHECKS = 0');
 
-$stmtCat = $mysqli->prepare('INSERT INTO categories (id, name, parent_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), parent_id = VALUES(parent_id)');
+$stmtCat = $mysqli->prepare(
+    'INSERT INTO categories (id, name, parent_id) VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE name = VALUES(name), parent_id = VALUES(parent_id)'
+);
 
-foreach ($categories as $cat) {
-    $id = (int)$cat['id'];
+foreach ($xmlCategories as $cat) {
+    $id   = (int) $cat['id'];
+    $name = trim((string) $cat);
+
+    // parentId може бути як parentId так і parent_id залежно від постачальника
     $parentId = null;
-    if (isset($cat['parentId'])) {
-        $parentId = (int)$cat['parentId'];
-    } elseif (isset($cat['parent_id'])) {
-        $parentId = (int)$cat['parent_id'];
+    if (isset($cat['parentId']) && (int)$cat['parentId'] > 0) {
+        $parentId = (int) $cat['parentId'];
+    } elseif (isset($cat['parent_id']) && (int)$cat['parent_id'] > 0) {
+        $parentId = (int) $cat['parent_id'];
     }
-    
-    $name = trim((string)$cat);
 
-    if ($parentId === null || $parentId === 0) {
-        $rootGroup = getRootCategoryName($name);
-        $rootId = 1000020; // Інші товари за замовчуванням
-        foreach ($predefinedRoots as $rid => $rname) {
-            if ($rname === $rootGroup) {
-                $rootId = $rid;
-                break;
-            }
-        }
-        $parentId = $rootId;
+    if ($id <= 0 || $name === '') {
+        continue;
     }
-    
+
     $stmtCat->bind_param('isi', $id, $name, $parentId);
     $stmtCat->execute();
     $stats['categories_created']++;
 }
-$stmtCat->close();
 
+$stmtCat->close();
 $mysqli->query('SET FOREIGN_KEY_CHECKS = 1');
 
 echo '<p class="ok">Категорії успішно імпортовано.</p>';
 flushOutput();
 
-// --- 2. ІМПОРТ ТОВАРІВ ---
-$offers = $xml->shop->offers->offer ?? [];
+// -----------------------------------------------------------------------
+// --- 2. ІМПОРТ ТОВАРІВ (category_id береться з XML, без маппінгу) ---
+// -----------------------------------------------------------------------
+$offers      = $xml->shop->offers->offer ?? [];
 $totalOffers = count($offers);
 echo "<p>Імпорт {$totalOffers} товарів...</p><ul id='progress'>";
 flushOutput();
@@ -161,7 +160,7 @@ $upsertProduct = $mysqli->prepare(
        supplier = VALUES(supplier)'
 );
 
-$insertImage = $mysqli->prepare('INSERT INTO product_images (product_id, image) VALUES (?, ?)');
+$insertImage  = $mysqli->prepare('INSERT INTO product_images (product_id, image) VALUES (?, ?)');
 $deleteImages = $mysqli->prepare('DELETE FROM product_images WHERE product_id = ?');
 
 $mysqli->begin_transaction();
@@ -170,54 +169,68 @@ try {
     $i = 0;
     foreach ($offers as $offer) {
         $i++;
-        
-        // Визначаємо SKU (пріоритет vendorCode, інакше id)
-        $sku = trim((string)$offer->vendorCode);
+
+        // SKU: спочатку vendorCode, потім id атрибут
+        $sku = trim((string) $offer->vendorCode);
         if ($sku === '') {
-            $sku = trim((string)$offer['id']);
+            $sku = trim((string) $offer['id']);
         }
-        
         if ($sku === '') {
             $stats['skipped']++;
             continue;
         }
 
-        // Визначаємо назву (пріоритет українська назва)
-        $name = trim((string)$offer->name_ua);
+        // Назва: пріоритет українська
+        $name = trim((string) $offer->name_ua);
         if ($name === '') {
-            $name = trim((string)$offer->name);
+            $name = trim((string) $offer->name);
         }
 
-        // Опис
-        $description = trim((string)$offer->description_ua);
+        // Опис: пріоритет українська
+        $description = trim((string) $offer->description_ua);
         if ($description === '') {
-            $description = trim((string)$offer->description);
+            $description = trim((string) $offer->description);
         }
 
-        $price = (float)$offer->price;
+        // Ціна
+        $price  = (float) $offer->price;
         $markup = isset($_GET['markup']) ? (float)$_GET['markup'] : 0.0;
         if ($markup > 0) {
             $price = round($price * (1 + $markup / 100), 2);
         }
-        $categoryId = (int)$offer->categoryId;
-        
-        $availableAttr = strtolower(trim((string)$offer['available']));
-        $availability = ($availableAttr === 'true' || $availableAttr === '1') ? 1 : 0;
-        
-        $quantity = isset($offer->quantity_in_stock) ? (int)$offer->quantity_in_stock : ($availability ? 1 : 0);
+
+        // Category ID з XML (оригінальний)
+        $categoryId = (int) $offer->categoryId;
+
+        // Доступність
+        $availableAttr = strtolower(trim((string) $offer['available']));
+        $availability  = ($availableAttr === 'true' || $availableAttr === '1') ? 1 : 0;
+
+        $quantity = isset($offer->quantity_in_stock) ? (int) $offer->quantity_in_stock : ($availability ? 1 : 0);
         if ($quantity <= 0 && $availability === 1) {
             $quantity = 1;
         }
 
-        if ($name === '' || $price <= 0 || $categoryId <= 0) {
+        // Пропускаємо якщо немає назви або ціни
+        if ($name === '' || $price <= 0) {
             $stats['skipped']++;
             if (count($stats['errors']) < 50) {
-                $stats['errors'][] = "Продукт SKU={$sku}: назва порожня або ціна/категорія некоректні";
+                $stats['errors'][] = "SKU={$sku}: порожня назва або нульова ціна";
             }
             continue;
         }
 
-        $upsertProduct->bind_param('sissdiis', $sku, $categoryId, $name, $description, $price, $availability, $quantity, $shopName);
+        // Якщо categoryId не знайдено в XML — пропускаємо або ставимо 0
+        // (FK вже включені, тому невалідний categoryId дасть помилку)
+        // Але categoryId=0 дозволено (NULL-able FK)
+        if ($categoryId <= 0) {
+            $categoryId = null; // null замість невалідного ID
+        }
+
+        $upsertProduct->bind_param('sissdiis',
+            $sku, $categoryId, $name, $description, $price,
+            $availability, $quantity, $shopName
+        );
         $upsertProduct->execute();
 
         $affected = $upsertProduct->affected_rows;
@@ -227,21 +240,19 @@ try {
             $stats['products_updated']++;
         }
 
-        // Видаляємо старі зображення, якщо не було очищення бази
         if (!$isReset) {
             $deleteImages->bind_param('s', $sku);
             $deleteImages->execute();
         }
 
-        // Завантажуємо зображення
+        // Зображення
         $images = [];
         foreach ($offer->picture as $pic) {
-            $picUrl = trim((string)$pic);
+            $picUrl = trim((string) $pic);
             if ($picUrl !== '' && !in_array($picUrl, $images, true)) {
                 $images[] = $picUrl;
             }
         }
-
         foreach ($images as $image) {
             $insertImage->bind_param('ss', $sku, $image);
             $insertImage->execute();
@@ -282,8 +293,8 @@ $mysqli->query("
 
 $counts = $mysqli->query("
     SELECT
-        (SELECT COUNT(*) FROM categories) AS categories_total,
-        (SELECT COUNT(*) FROM products) AS products_total,
+        (SELECT COUNT(*) FROM categories)     AS categories_total,
+        (SELECT COUNT(*) FROM products)       AS products_total,
         (SELECT COUNT(*) FROM product_images) AS images_total
 ")->fetch_assoc();
 
@@ -314,4 +325,3 @@ if ($stats['errors'] !== []) {
 
 echo '<p><a href="/course__udemy/frontend/">Перейти на сайт</a></p>';
 echo '</body></html>';
-?>

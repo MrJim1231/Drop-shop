@@ -1,9 +1,12 @@
 <?php
 /**
- * Імпорт товарів з Excel catalog_dropt_2026-07-12.xlsx
+ * Імпорт товарів з Excel (catalog_dropt_*.xlsx)
+ *
+ * Категорії беруться 1:1 з колонки "Категорії" Excel — без жодного маппінгу.
  *
  * http://localhost/course__udemy/backend/scripts/import_products.php
  * http://localhost/course__udemy/backend/scripts/import_products.php?reset=1
+ * http://localhost/course__udemy/backend/scripts/import_products.php?reset=1&markup=20
  */
 
 declare(strict_types=1);
@@ -18,13 +21,13 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/category_helpers.php';
 
 $startedAt = microtime(true);
-$isReset = isset($_GET['reset']);
+$isReset   = isset($_GET['reset']);
 
 echo '<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Імпорт каталогу</title>';
 echo '<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:40px auto;padding:0 20px;color:#1e293b}';
 echo '.ok{color:#059669}.warn{color:#d97706}.err{color:#dc2626}table{border-collapse:collapse;width:100%;margin:16px 0}';
 echo 'td,th{border:1px solid #e2e8f0;padding:8px 12px;text-align:left}th{background:#f8fafc}</style></head><body>';
-echo '<h1>Імпорт каталогу DropShop</h1>';
+echo '<h1>Імпорт каталогу DropShop (Excel)</h1>';
 
 flushOutput();
 
@@ -35,23 +38,7 @@ if ($mysqli->connect_error) {
     die('<p class="err">Помилка підключення до БД: ' . htmlspecialchars($mysqli->connect_error) . '</p></body></html>');
 }
 
-// Записуємо 20 зумовлених базових категорій
-foreach ($predefinedRoots as $rootId => $rootName) {
-    $stmt = $mysqli->prepare('INSERT INTO categories (id, name, parent_id) VALUES (?, ?, NULL) ON DUPLICATE KEY UPDATE name = VALUES(name)');
-    $stmt->bind_param('is', $rootId, $rootName);
-    $stmt->execute();
-    $stmt->close();
-}
-
-$fileName = isset($_GET['file']) ? $_GET['file'] : 'catalog_dropt_2026-07-12.xlsx';
-$fileName = basename($fileName); // Санітизація імені файлу
-
-$catalogFile = dirname(__DIR__, 2) . '/' . $fileName;
-
-if (!file_exists($catalogFile)) {
-    die('<p class="err">Файл не знайдено: ' . htmlspecialchars($fileName) . '</p></body></html>');
-}
-
+// --- Reset ---
 if ($isReset) {
     $mysqli->query('SET FOREIGN_KEY_CHECKS = 0');
     $mysqli->query('TRUNCATE TABLE product_images');
@@ -62,7 +49,16 @@ if ($isReset) {
     flushOutput();
 }
 
-echo '<p>Читаю Excel-файл...</p>';
+// --- Файл ---
+$fileName    = isset($_GET['file']) ? $_GET['file'] : 'catalog_dropt_2026-07-12.xlsx';
+$fileName    = basename($fileName);
+$catalogFile = dirname(__DIR__, 2) . '/' . $fileName;
+
+if (!file_exists($catalogFile)) {
+    die('<p class="err">Файл не знайдено: ' . htmlspecialchars($fileName) . '</p></body></html>');
+}
+
+echo '<p>Читаю Excel-файл <strong>' . htmlspecialchars($fileName) . '</strong>...</p>';
 flushOutput();
 
 try {
@@ -75,28 +71,39 @@ if (count($rows) < 2) {
     die('<p class="err">Файл порожній або без даних.</p></body></html>');
 }
 
-$headers = array_map('trim', $rows[0]);
+$headers   = array_map('trim', $rows[0]);
 $columnMap = buildColumnMap($headers);
 $totalRows = count($rows) - 1;
 
 $stats = [
-    'total_rows' => $totalRows,
+    'total_rows'         => $totalRows,
     'categories_created' => 0,
-    'products_added' => 0,
-    'products_updated' => 0,
-    'images_added' => 0,
-    'skipped' => 0,
-    'errors' => [],
+    'products_added'     => 0,
+    'products_updated'   => 0,
+    'images_added'       => 0,
+    'skipped'            => 0,
+    'errors'             => [],
 ];
 
-$categoryCache = [];
+// --- Кеш категорій: name → id ---
+// Категорії в Excel — плоскі (один рівень), parent_id = NULL.
+$categoryCache  = []; // ['Назва категорії' => id]
 $nextCategoryId = 1;
 
 if (!$isReset) {
-    $result = $mysqli->query('SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM categories');
+    $result         = $mysqli->query('SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM categories');
     $nextCategoryId = (int) ($result->fetch_assoc()['next_id'] ?? 1);
-    $categoryCache = loadCategoryCacheFast($mysqli);
+    // Будуємо кеш за назвою
+    $res = $mysqli->query('SELECT id, name FROM categories');
+    while ($row = $res->fetch_assoc()) {
+        $categoryCache[trim($row['name'])] = (int) $row['id'];
+    }
 }
+
+$stmtInsertCat = $mysqli->prepare(
+    'INSERT INTO categories (id, name, parent_id) VALUES (?, ?, NULL)
+     ON DUPLICATE KEY UPDATE name = VALUES(name)'
+);
 
 $upsertProduct = $mysqli->prepare(
     'INSERT INTO products (id, group_id, category_id, name, description, price, size, availability, quantity_in_stock, weight, supplier)
@@ -111,7 +118,7 @@ $upsertProduct = $mysqli->prepare(
        supplier = VALUES(supplier)'
 );
 
-$insertImage = $mysqli->prepare('INSERT INTO product_images (product_id, image) VALUES (?, ?)');
+$insertImage  = $mysqli->prepare('INSERT INTO product_images (product_id, image) VALUES (?, ?)');
 $deleteImages = $mysqli->prepare('DELETE FROM product_images WHERE product_id = ?');
 
 echo "<p>Імпорт {$totalRows} товарів...</p><ul id='progress'>";
@@ -129,21 +136,21 @@ try {
             continue;
         }
 
-        $name = trim(getCell($row, $columnMap, 'name_uk'));
+        $name        = trim(getCell($row, $columnMap, 'name_uk'));
         $description = trim(getCell($row, $columnMap, 'desc_uk'));
-        $price = parsePrice(getCell($row, $columnMap, 'price'));
-        
+        $price       = parsePrice(getCell($row, $columnMap, 'price'));
+
         $markup = isset($_GET['markup']) ? (float)$_GET['markup'] : 0.0;
         if ($markup > 0) {
             $price = round($price * (1 + $markup / 100), 2);
         }
 
-        $categoryPath = trim(getCell($row, $columnMap, 'category'));
+        $categoryName    = trim(getCell($row, $columnMap, 'category'));
         $availabilityText = trim(getCell($row, $columnMap, 'availability'));
-        $mainImage = trim(getCell($row, $columnMap, 'main_image'));
-        $extraImages = trim(getCell($row, $columnMap, 'extra_images'));
+        $mainImage       = trim(getCell($row, $columnMap, 'main_image'));
+        $extraImages     = trim(getCell($row, $columnMap, 'extra_images'));
 
-        if ($name === '' || $price <= 0 || $categoryPath === '') {
+        if ($name === '' || $price <= 0 || $categoryName === '') {
             $stats['skipped']++;
             if (count($stats['errors']) < 50) {
                 $stats['errors'][] = "Рядок {$i}: пропущено, SKU={$sku}";
@@ -151,11 +158,23 @@ try {
             continue;
         }
 
-        $categoryId = resolveCategoryPath($mysqli, $categoryPath, $categoryCache, $nextCategoryId, $stats);
-        $availability = isAvailable($availabilityText) ? 1 : 0;
-        $quantity = $availability ? 1 : 0;
+        // --- Категорія: шукаємо або створюємо за назвою ---
+        if (!isset($categoryCache[$categoryName])) {
+            $catId = $nextCategoryId++;
+            $stmtInsertCat->bind_param('is', $catId, $categoryName);
+            $stmtInsertCat->execute();
+            $categoryCache[$categoryName] = $catId;
+            $stats['categories_created']++;
+        }
+        $categoryId = $categoryCache[$categoryName];
 
-        $upsertProduct->bind_param('sissdiis', $sku, $categoryId, $name, $description, $price, $availability, $quantity, $fileName);
+        $availability    = isAvailable($availabilityText) ? 1 : 0;
+        $quantityInStock = $availability ? 1 : 0;
+
+        $upsertProduct->bind_param('sissdiis',
+            $sku, $categoryId, $name, $description, $price,
+            $availability, $quantityInStock, $fileName
+        );
         $upsertProduct->execute();
 
         $affected = $upsertProduct->affected_rows;
@@ -190,6 +209,7 @@ try {
     exit;
 }
 
+$stmtInsertCat->close();
 $upsertProduct->close();
 $insertImage->close();
 $deleteImages->close();
@@ -212,7 +232,7 @@ $mysqli->query("
 $counts = $mysqli->query("
     SELECT
         (SELECT COUNT(*) FROM categories) AS categories_total,
-        (SELECT COUNT(*) FROM products) AS products_total,
+        (SELECT COUNT(*) FROM products)   AS products_total,
         (SELECT COUNT(*) FROM product_images) AS images_total
 ")->fetch_assoc();
 
@@ -308,93 +328,6 @@ function isAvailable(string $text): bool
 {
     $text = mb_strtolower(trim($text));
     return $text === '' || str_contains($text, 'наявн') || str_contains($text, 'налич');
-}
-
-function loadCategoryCacheFast(mysqli $mysqli): array
-{
-    $nodes = [];
-    $result = $mysqli->query('SELECT id, name, parent_id FROM categories');
-
-    while ($row = $result->fetch_assoc()) {
-        $nodes[(int) $row['id']] = [
-            'name' => trim($row['name']),
-            'parent_id' => $row['parent_id'] ? (int) $row['parent_id'] : null,
-        ];
-    }
-
-    $cache = [];
-    foreach (array_keys($nodes) as $id) {
-        $path = buildPathFromNodes($id, $nodes);
-        if ($path !== '') {
-            $cache[$path] = $id;
-        }
-    }
-
-    return $cache;
-}
-
-function buildPathFromNodes(int $categoryId, array $nodes): string
-{
-    $parts = [];
-    $currentId = $categoryId;
-    $guard = 0;
-
-    while (isset($nodes[$currentId]) && $guard < 20) {
-        array_unshift($parts, $nodes[$currentId]['name']);
-        $currentId = $nodes[$currentId]['parent_id'] ?? 0;
-        $guard++;
-    }
-
-    return implode(' | ', $parts);
-}
-
-function resolveCategoryPath(
-    mysqli $mysqli,
-    string $categoryPath,
-    array &$cache,
-    int &$nextCategoryId,
-    array &$stats
-): int {
-    $parts = array_values(array_filter(array_map('trim', preg_split('/\s*\|\s*/u', $categoryPath) ?: [])));
-
-    if ($parts === []) {
-        throw new RuntimeException('Порожній шлях категорії');
-    }
-
-    global $predefinedRoots;
-    $firstPart = $parts[0];
-    if (!in_array($firstPart, $predefinedRoots, true)) {
-        $rootName = getRootCategoryName($categoryPath);
-        array_unshift($parts, $rootName);
-    }
-
-    $parentId = null;
-    $pathSoFar = '';
-    $categoryId = 0;
-
-    $stmt = $mysqli->prepare('INSERT INTO categories (id, name, parent_id) VALUES (?, ?, ?)');
-
-    foreach ($parts as $part) {
-        $pathSoFar = $pathSoFar === '' ? $part : $pathSoFar . ' | ' . $part;
-
-        if (isset($cache[$pathSoFar])) {
-            $categoryId = $cache[$pathSoFar];
-            $parentId = $categoryId;
-            continue;
-        }
-
-        $categoryId = $nextCategoryId++;
-        $stmt->bind_param('isi', $categoryId, $part, $parentId);
-        $stmt->execute();
-
-        $cache[$pathSoFar] = $categoryId;
-        $stats['categories_created']++;
-        $parentId = $categoryId;
-    }
-
-    $stmt->close();
-
-    return $categoryId;
 }
 
 function collectImages(string $mainImage, string $extraImages): array
