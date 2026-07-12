@@ -30,45 +30,61 @@ export async function renderHome() {
   ]
 
   container.innerHTML = `
-    <!-- Головний баннер / Слайдер -->
-    <section class="relative overflow-hidden bg-slate-950 group">
-      <div id="home-slider-container" class="relative h-[380px] sm:h-[450px] md:h-[500px] w-full flex transition-transform duration-700 ease-in-out" style="width: 300%; transform: translateX(0%);">
+    <!-- Головний баннер / Слайдер (Asymmetrical) -->
+    <section class="relative overflow-hidden bg-slate-50 group border-b border-slate-200/60">
+      <div id="home-slider-container" class="relative h-[500px] sm:h-[550px] md:h-[650px] w-full flex transition-transform duration-700 ease-in-out" style="width: 300%; transform: translateX(0%);">
         ${slides.map((s, idx) => `
-          <div class="w-1/3 h-full relative flex-shrink-0 bg-cover bg-center select-none" style="background-image: url('${s.image}')">
-            <!-- Dark gradient overlay for readability -->
-            <div class="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-950/65 to-transparent"></div>
+          <div class="w-1/3 h-full relative flex-shrink-0 flex items-center overflow-hidden bg-slate-50">
             
-            <div class="absolute inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center z-10">
-              <div class="max-w-2xl transform translate-y-4 opacity-0 transition-all duration-700 ease-out slide-content">
-                <span class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-6 uppercase tracking-wider">Ексклюзивна колекція</span>
-                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight tracking-tight">${s.title}</h1>
-                <p class="mt-4 text-sm sm:text-base md:text-lg text-slate-300 leading-relaxed font-normal">${s.subtitle}</p>
-                <div class="mt-8 flex flex-wrap gap-4">
-                  <a href="${s.link}" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all duration-200 shadow-lg shadow-indigo-600/35">
-                    ${s.btnText}
-                  </a>
-                  <a href="/categories" class="inline-flex items-center px-6 py-3 border border-white/20 text-white hover:bg-white/10 font-semibold rounded-xl transition-all duration-200 backdrop-blur-sm">
-                    Каталог
-                  </a>
+            <!-- Asymmetrical Image (Right Side) -->
+            <div class="absolute top-0 right-0 w-[85%] md:w-[65%] h-full z-0 transition-transform duration-1000 ease-in-out transform scale-105 group-hover:scale-100" style="clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);">
+              <div class="absolute inset-0 bg-indigo-900/10 mix-blend-multiply z-10"></div>
+              <img src="${s.image}" class="w-full h-full object-cover object-center" alt="${s.title}" />
+            </div>
+
+            <!-- Content Card (Left Side) -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-20 flex">
+              <div class="w-full md:w-[55%] lg:w-[45%] transform translate-y-8 opacity-0 transition-all duration-700 ease-out slide-content">
+                <div class="bg-white/80 backdrop-blur-2xl p-8 sm:p-12 rounded-[2rem] shadow-2xl border border-white/80 relative overflow-hidden">
+                  
+                  <!-- Decorative blur effects inside card -->
+                  <div class="absolute -top-10 -right-10 w-32 h-32 bg-indigo-200 rounded-full mix-blend-multiply filter blur-2xl opacity-60"></div>
+                  <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-fuchsia-200 rounded-full mix-blend-multiply filter blur-2xl opacity-60"></div>
+                  
+                  <div class="relative z-10">
+                    <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black bg-indigo-100 text-indigo-700 mb-6 uppercase tracking-widest shadow-sm border border-indigo-200">✨ Нова колекція</span>
+                    <h1 class="text-4xl sm:text-5xl md:text-5xl font-black text-slate-900 leading-[1.1] tracking-tight mb-5">${s.title}</h1>
+                    <p class="text-base sm:text-lg text-slate-600 leading-relaxed font-medium mb-8">${s.subtitle}</p>
+                    <div class="flex flex-wrap gap-4">
+                      <a href="${s.link}" class="inline-flex items-center px-7 py-3.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-indigo-600 transition-all duration-300 shadow-xl shadow-slate-900/20 hover:-translate-y-1">
+                        ${s.btnText}
+                      </a>
+                      <a href="/categories" class="inline-flex items-center px-7 py-3.5 bg-white text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-all duration-300 shadow-sm border border-slate-200 hover:-translate-y-1">
+                        Каталог
+                      </a>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
+
           </div>
         `).join('')}
       </div>
 
       <!-- Navigation Arrows -->
-      <button id="slider-prev" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-xl bg-slate-900/60 hover:bg-slate-950 text-white flex items-center justify-center border border-white/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-20 cursor-pointer">
+      <button id="slider-prev" class="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-slate-800 flex items-center justify-center border border-slate-200 shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-30 cursor-pointer hover:scale-110">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <button id="slider-next" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-xl bg-slate-900/60 hover:bg-slate-950 text-white flex items-center justify-center border border-white/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-20 cursor-pointer">
+      <button id="slider-next" class="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-slate-800 flex items-center justify-center border border-slate-200 shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all duration-300 z-30 cursor-pointer hover:scale-110">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
       </button>
 
       <!-- Indicator Dots -->
-      <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+      <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-30">
         ${slides.map((_, idx) => `
-          <button data-slide-to="${idx}" class="slider-dot w-2.5 h-2.5 rounded-full bg-white/40 hover:bg-white transition-all duration-300 cursor-pointer" aria-label="Перейти до слайду ${idx + 1}"></button>
+          <button data-slide-to="${idx}" class="slider-dot w-2.5 h-2.5 rounded-full bg-slate-300 hover:bg-indigo-600 transition-all duration-300 cursor-pointer shadow-sm" aria-label="Перейти до слайду ${idx + 1}"></button>
         `).join('')}
       </div>
     </section>
@@ -148,21 +164,21 @@ export async function renderHome() {
     
     dots.forEach((dot, idx) => {
       if (idx === currentSlide) {
-        dot.classList.remove('bg-white/40', 'w-2.5')
-        dot.classList.add('bg-white', 'w-8')
+        dot.classList.remove('bg-slate-300', 'w-2.5')
+        dot.classList.add('bg-indigo-600', 'w-8')
       } else {
-        dot.classList.remove('bg-white', 'w-8')
-        dot.classList.add('bg-white/40', 'w-2.5')
+        dot.classList.remove('bg-indigo-600', 'w-8')
+        dot.classList.add('bg-slate-300', 'w-2.5')
       }
     })
 
     contents.forEach((content, idx) => {
       if (idx === currentSlide) {
-        content.classList.remove('translate-y-4', 'opacity-0')
+        content.classList.remove('translate-y-8', 'opacity-0')
         content.classList.add('translate-y-0', 'opacity-100')
       } else {
         content.classList.remove('translate-y-0', 'opacity-100')
-        content.classList.add('translate-y-4', 'opacity-0')
+        content.classList.add('translate-y-8', 'opacity-0')
       }
     })
   }
