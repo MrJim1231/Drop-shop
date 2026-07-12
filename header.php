@@ -27,6 +27,9 @@ $asset_base = $base . '/frontend/dist';
   <meta name="description" content="<?= htmlspecialchars($page_description) ?>" />
   <meta name="robots" content="index, follow" />
 
+  <!-- Canonical URL — prevents Google from treating /page=2 as a duplicate -->
+  <link rel="canonical" href="<?= htmlspecialchars($og_url) ?>" />
+
   <!-- OpenGraph (Facebook, Telegram, Viber, WhatsApp) -->
   <meta property="og:type"        content="website" />
   <meta property="og:site_name"   content="DropShop" />
