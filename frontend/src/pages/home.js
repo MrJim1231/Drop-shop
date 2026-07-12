@@ -309,14 +309,20 @@ async function loadCategories(container) {
       categories = allCategories
     }
     const top = categories.slice(0, 8)
-    el.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+    el.innerHTML = `<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-y-10 gap-x-6 justify-center">
       ${top.map((cat) => `
-        <a href="/category/${cat.id}-${slugify(cat.name)}" class="group bg-white rounded-2xl border border-slate-200/60 overflow-hidden hover:shadow-xl hover:border-indigo-200 transition-all duration-300">
-          <div class="aspect-[4/3] bg-slate-50 overflow-hidden relative">
-            <img src="${escapeHtml(cat.image)}" alt="${escapeHtml(cat.name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" loading="lazy"
-              onerror="this.src='https://placehold.co/400x300/f1f5f9/94a3b8?text=${encodeURIComponent(cat.name)}'" />
+        <a href="/category/${cat.id}-${slugify(cat.name)}" class="group flex flex-col items-center focus:outline-none">
+          <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full border border-slate-200/60 dark:border-white/5 shadow-sm hover:shadow-lg hover:border-indigo-500/30 transition-all duration-300 flex items-center justify-center bg-white dark:bg-slate-900">
+            <!-- Glow Ring -->
+            <div class="absolute -inset-1 rounded-full border border-transparent group-hover:border-indigo-500/20 group-hover:scale-105 transition-all duration-500"></div>
+            
+            <!-- Inner Image Mask -->
+            <div class="w-full h-full rounded-full overflow-hidden relative z-10">
+              <img src="${escapeHtml(cat.image)}" alt="${escapeHtml(cat.name)}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out" loading="lazy"
+                onerror="this.src='https://placehold.co/150x150/f1f5f9/94a3b8?text=${encodeURIComponent(cat.name)}'" />
+            </div>
           </div>
-          <p class="p-4 text-sm font-semibold text-slate-800 text-center group-hover:text-indigo-600 transition-colors">${escapeHtml(cat.name)}</p>
+          <span class="mt-3 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 text-center group-hover:text-indigo-600 transition-colors line-clamp-2 max-w-[110px] leading-tight">${escapeHtml(cat.name)}</span>
         </a>
       `).join('')}
     </div>`
