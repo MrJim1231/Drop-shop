@@ -98,6 +98,43 @@ export async function renderHome() {
       <div id="home-categories">${loadingSpinner()}</div>
     </section>
 
+    <!-- Дві промо-картки на всю ширину фону -->
+    <section class="w-full bg-slate-50 py-12 md:py-16 border-t border-slate-200/60">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+          
+          <!-- Картка 1 -->
+          <div class="relative rounded-3xl overflow-hidden shadow-xl group h-72 sm:h-80 md:h-[350px]">
+            <img src="/accessories_banner.png" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" alt="Нова колекція">
+            <div class="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/70 to-transparent"></div>
+            <div class="relative z-10 p-8 sm:p-12 flex flex-col justify-center h-full w-[85%] sm:w-2/3">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-4 uppercase tracking-widest w-fit">Тільки сьогодні</span>
+              <h3 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 leading-tight tracking-tight">Знижка -20% на всі аксесуари</h3>
+              <p class="text-sm text-slate-300 mb-8 font-medium">Оновіть свій стиль за найкращими цінами.</p>
+              <a href="/categories" class="inline-flex items-center justify-center px-6 py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-indigo-50 transition-colors shadow-lg w-fit group-hover:scale-105 duration-300">
+                Обрати зараз
+              </a>
+            </div>
+          </div>
+
+          <!-- Картка 2 -->
+          <div class="relative rounded-3xl overflow-hidden shadow-xl group h-72 sm:h-80 md:h-[350px]">
+            <img src="/electronics_banner.png" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" alt="Топ продажу">
+            <div class="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/70 to-transparent"></div>
+            <div class="relative z-10 p-8 sm:p-12 flex flex-col justify-center h-full w-[85%] sm:w-2/3">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 mb-4 uppercase tracking-widest w-fit">🔥 Топ продажу</span>
+              <h3 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 leading-tight tracking-tight">Нові моделі смарт-техніки</h3>
+              <p class="text-sm text-slate-300 mb-8 font-medium">Найкращі гаджети для вашого комфорту.</p>
+              <a href="/categories" class="inline-flex items-center justify-center px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/30 w-fit group-hover:scale-105 duration-300">
+                Переглянути
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
     <!-- Популярні товари -->
     <section class="bg-white border-y border-slate-200/60">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
