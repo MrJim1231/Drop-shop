@@ -1,5 +1,5 @@
 import { api } from '../api/client.js'
-import { productCard, loadingSpinner, escapeHtml } from '../utils.js'
+import { productCard, loadingSpinner, escapeHtml, slugify } from '../utils.js'
 
 export async function renderHome() {
   const container = document.createElement('div')
@@ -72,7 +72,7 @@ async function loadCategories(container) {
 
     el.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
       ${top.map((cat) => `
-        <a href="/category/${cat.id}" class="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-md hover:border-indigo-200 transition-all">
+        <a href="/category/${cat.id}-${slugify(cat.name)}" class="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-md hover:border-indigo-200 transition-all">
           <div class="aspect-[4/3] bg-slate-100 overflow-hidden">
             <img src="${escapeHtml(cat.image)}" alt="${escapeHtml(cat.name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy"
               onerror="this.src='https://placehold.co/400x300/f1f5f9/94a3b8?text=${encodeURIComponent(cat.name)}'" />

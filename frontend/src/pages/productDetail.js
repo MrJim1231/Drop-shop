@@ -1,6 +1,6 @@
 import { api } from '../api/client.js'
 import { cartStore } from '../store/cart.js'
-import { formatPrice, escapeHtml, stripHtml, loadingSpinner, showToast } from '../utils.js'
+import { formatPrice, escapeHtml, stripHtml, loadingSpinner, showToast, slugify } from '../utils.js'
 
 export async function renderProductDetail(productId) {
   const container = document.createElement('div')
@@ -21,7 +21,7 @@ export async function renderProductDetail(productId) {
         <a href="/" class="hover:text-indigo-600">Головна</a>
         <span class="mx-2">/</span>
         <a href="/categories" class="hover:text-indigo-600">Каталог</a>
-        ${product.category_id ? `<span class="mx-2">/</span><a href="/category/${product.category_id}" class="hover:text-indigo-600">${escapeHtml(product.category_name || '')}</a>` : ''}
+        ${product.category_id ? `<span class="mx-2">/</span><a href="/category/${product.category_id}-${slugify(product.category_name || '')}" class="hover:text-indigo-600">${escapeHtml(product.category_name || '')}</a>` : ''}
         <span class="mx-2">/</span>
         <span class="text-slate-800">${escapeHtml(product.name)}</span>
       </nav>

@@ -34,10 +34,12 @@ function parsePath() {
   if (parts.length === 0) return { path: '/', params: {} }
 
   if (parts[0] === 'category' && parts[1]) {
-    return { path: '/category/:id', params: { id: parts[1] } }
+    const id = parts[1].split('-')[0]
+    return { path: '/category/:id', params: { id } }
   }
   if (parts[0] === 'product' && parts[1]) {
-    return { path: '/product/:id', params: { id: parts[1] } }
+    const id = parts[1].split('-')[0]
+    return { path: '/product/:id', params: { id } }
   }
 
   const path = '/' + parts[0]
