@@ -26,9 +26,13 @@ $asset_base = $base . '/frontend/dist';
   <title><?= htmlspecialchars($page_title) ?></title>
   <meta name="description" content="<?= htmlspecialchars($page_description) ?>" />
   <meta name="robots" content="index, follow" />
+  <meta property="og:locale" content="uk_UA" />
 
   <!-- Canonical URL — prevents Google from treating /page=2 as a duplicate -->
   <link rel="canonical" href="<?= htmlspecialchars($og_url) ?>" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars($asset_base) ?>/favicon.svg" />
 
   <!-- OpenGraph (Facebook, Telegram, Viber, WhatsApp) -->
   <meta property="og:type"        content="website" />

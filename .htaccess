@@ -1,5 +1,32 @@
 RewriteEngine On
 
+# ─── SECURITY ────────────────────────────────────────────────────────────────
+# Block direct access to debug/sensitive files
+<FilesMatch "^(check_db|schema|promt|catalog_parse|catalog_info|table)\.(php|sql|txt|md)$">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+# Block direct access to backend source includes
+RewriteRule ^backend/includes/ - [F,L]
+RewriteRule ^backend/config\.php$ - [F,L]
+
+# ─── PERFORMANCE: Gzip compression ──────────────────────────────────────────
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json application/xml text/xml text/plain
+</IfModule>
+
+# Browser caching for static assets
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp "access plus 1 month"
+  ExpiresByType image/png  "access plus 1 month"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType text/css   "access plus 1 week"
+  ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+
 # Route home page
 RewriteRule ^$ index.php [L]
 
