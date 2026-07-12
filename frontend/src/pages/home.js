@@ -90,6 +90,27 @@ export async function renderHome() {
       </div>
     </section>
 
+    <!-- Додатковий Hero / Промо блок -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="relative rounded-3xl overflow-hidden shadow-2xl group">
+        <div class="absolute inset-0 bg-gradient-to-br from-violet-900 via-indigo-800 to-blue-900"></div>
+        <img src="/electronics_banner.png" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40 group-hover:scale-105 transition-transform duration-700 ease-in-out" alt="Promo background">
+        <div class="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-900/50 to-transparent"></div>
+        <div class="relative z-10 px-8 py-16 sm:px-16 sm:py-24 lg:w-2/3">
+          <span class="inline-flex items-center px-3 py-1 bg-white/10 text-white text-xs font-bold rounded-full mb-6 tracking-wider uppercase backdrop-blur-md border border-white/20">
+            <span class="w-2 h-2 rounded-full bg-red-500 mr-2 animate-pulse"></span>
+            Супер пропозиція
+          </span>
+          <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight drop-shadow-md">Знижки до -50% на техніку та аксесуари</h2>
+          <p class="text-lg text-indigo-100 mb-8 max-w-xl leading-relaxed drop-shadow-sm">Оновіть свій арсенал гаджетів з нашими найкращими товарами. Акція діє лише до кінця тижня. Не проґавте свій шанс отримати преміальну якість за вигідною ціною!</p>
+          <a href="/categories" class="inline-flex items-center px-6 py-3.5 bg-white text-indigo-900 font-bold rounded-xl hover:bg-indigo-50 hover:scale-105 transition-all duration-300 shadow-xl shadow-black/20">
+            Переглянути акції
+            <svg class="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
     <!-- Переваги магазину -->
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
