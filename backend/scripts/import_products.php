@@ -1,116 +1,396 @@
 <?php
-// URL файла YML
-$url = "https://backend.mydrop.com.ua/vendor/api/export/products/prom/yml?public_api_key=7cbe3718003f120a0fa58cc327e6bdd508667edf&price_field=price&param_name=%D0%A0%D0%B0%D0%B7%D0%BC%D0%B5%D1%80&stock_sync=true&category_id=17670&platform=prom&file_format=yml&use_import_ids=false&with_hidden=false";
+/**
+ * Імпорт товарів з Excel-файлу catalog_dropt_*.xlsx
+ *
+ * Запуск:
+ *   http://localhost/course__udemy/backend/scripts/import_products.php
+ *   http://localhost/course__udemy/backend/scripts/import_products.php?reset=1  — очистити таблиці перед імпортом
+ */
 
-// Загружаем YML-файл
-$xml = simplexml_load_file($url);
+declare(strict_types=1);
 
-if (!$xml) {
-    die("Ошибка загрузки YML");
-}
+header('Content-Type: text/html; charset=utf-8');
 
-// Подключаем базу данных
-include('../config.php');
+require_once __DIR__ . '/SimpleXlsxReader.php';
+require_once __DIR__ . '/../config.php';
+
 $mysqli = new mysqli(DB_HOSTNAME, DB_USERNAME, DB_PASSWORD, DB_DATABASE);
+$mysqli->set_charset('utf8mb4');
 
 if ($mysqli->connect_error) {
-    die("Ошибка подключения: " . $mysqli->connect_error);
+    die('Помилка підключення до БД: ' . $mysqli->connect_error);
 }
 
-// === ДОБАВЛЕНИЕ И ОБНОВЛЕНИЕ КАТЕГОРИЙ ===
-foreach ($xml->shop->categories->category as $category) {
-    $category_id = (string)$category['id'];
-    $category_name = $mysqli->real_escape_string((string)$category);
-    $parent_id = isset($category['parentId']) ? (string)$category['parentId'] : NULL;
+$catalogFile = dirname(__DIR__, 2) . '/catalog_dropt_2026-07-12.xlsx';
 
-    // Проверка, существует ли родительская категория
-    if ($parent_id) {
-        $checkParentQuery = "SELECT id FROM categories WHERE id = '$parent_id'";
-        $parentResult = $mysqli->query($checkParentQuery);
-        if ($parentResult->num_rows == 0) {
-            // Вставка родительской категории, если её нет в базе
-            $parent_category_name = ''; // Имя родительской категории оставим пустым, если не можем найти
-            foreach ($xml->shop->categories->category as $parentCategory) {
-                if ((string)$parentCategory['id'] == $parent_id) {
-                    $parent_category_name = $mysqli->real_escape_string((string)$parentCategory);
-                    break;
-                }
-            }
-            $mysqli->query("INSERT INTO categories (id, name, parent_id) VALUES ('$parent_id', '$parent_category_name', NULL)");
-        }
-    }
-
-    // Проверка, существует ли категория в базе
-    $checkQuery = "SELECT id FROM categories WHERE id = '$category_id'";
-    $result = $mysqli->query($checkQuery);
-
-    if ($result->num_rows == 0) {
-        // Вставка категории с родительским ID
-        $mysqli->query("INSERT INTO categories (id, name, parent_id) VALUES ('$category_id', '$category_name', " . ($parent_id ? "'$parent_id'" : "NULL") . ")");
-    }
+if (!file_exists($catalogFile)) {
+    die('Файл каталогу не знайдено: catalog_dropt_2026-07-12.xlsx (має бути в корені проекту)');
 }
 
-// === ДОБАВЛЕНИЕ И ОБНОВЛЕНИЕ ТОВАРОВ ===
-$totalProducts = 0;
-$updatedProducts = 0; // Переменная для подсчета обновленных товаров
+if (isset($_GET['reset'])) {
+    $mysqli->query('SET FOREIGN_KEY_CHECKS = 0');
+    $mysqli->query('TRUNCATE TABLE product_images');
+    $mysqli->query('TRUNCATE TABLE products');
+    $mysqli->query('TRUNCATE TABLE categories');
+    $mysqli->query('SET FOREIGN_KEY_CHECKS = 1');
+    echo '<p><strong>Таблиці categories, products, product_images очищено.</strong></p>';
+}
 
-foreach ($xml->shop->offers->offer as $offer) {
-    $product_id = (string)$offer['id'];
-    $group_id = isset($offer['group_id']) ? (string)$offer['group_id'] : NULL;
-    $category_id = (string)$offer->categoryId;
-    $name = $mysqli->real_escape_string($offer->name);
-    $description = $mysqli->real_escape_string($offer->description);
-    $price = (float)$offer->price;
-    $availability = ($offer['available'] == 'true') ? 1 : 0;
-    $quantity_in_stock = isset($offer->quantity_in_stock) ? (int)$offer->quantity_in_stock : 0;
-    $weight = isset($offer->weight) ? (float)$offer->weight : 0.0;
+try {
+    $rows = SimpleXlsxReader::readRows($catalogFile);
+} catch (Throwable $e) {
+    die('Помилка читання XLSX: ' . htmlspecialchars($e->getMessage()));
+}
 
-    // Ищем параметр "Размер"
-    $size = '';
-    foreach ($offer->param as $param) {
-        if ((string)$param['name'] == 'Размер') {
-            $size = $mysqli->real_escape_string((string)$param);
-            break;
-        }
+if (count($rows) < 2) {
+    die('Файл каталогу порожній або містить лише заголовки');
+}
+
+$headers = array_map('trim', $rows[0]);
+$columnMap = buildColumnMap($headers);
+
+$stats = [
+    'total_rows' => count($rows) - 1,
+    'categories_created' => 0,
+    'products_added' => 0,
+    'products_updated' => 0,
+    'images_added' => 0,
+    'skipped' => 0,
+    'errors' => [],
+];
+
+$categoryCache = loadCategoryCache($mysqli);
+$nextCategoryId = getNextCategoryId($mysqli, $categoryCache);
+
+for ($i = 1; $i < count($rows); $i++) {
+    $row = normalizeRow($rows[$i], count($headers));
+
+    $sku = trim(getCell($row, $columnMap, 'sku'));
+    if ($sku === '') {
+        $stats['skipped']++;
+        continue;
     }
 
-    // Проверка, существует ли товар в базе данных
-    $checkQuery = "SELECT id, price, quantity_in_stock FROM products WHERE id = '$product_id'";
-    $result = $mysqli->query($checkQuery);
+    $name = trim(getCell($row, $columnMap, 'name_uk'));
+    $description = trim(getCell($row, $columnMap, 'desc_uk'));
+    $price = parsePrice(getCell($row, $columnMap, 'price'));
+    $categoryPath = trim(getCell($row, $columnMap, 'category'));
+    $availabilityText = trim(getCell($row, $columnMap, 'availability'));
+    $mainImage = trim(getCell($row, $columnMap, 'main_image'));
+    $extraImages = trim(getCell($row, $columnMap, 'extra_images'));
 
-    if ($result->num_rows == 0) {
-        // Если товара нет в базе, добавляем его
-        $mysqli->query("INSERT INTO products (id, group_id, category_id, name, description, price, size, availability, quantity_in_stock, weight) 
-                        VALUES ('$product_id', " . ($group_id ? "'$group_id'" : "NULL") . ", '$category_id', '$name', '$description', $price, '$size', $availability, $quantity_in_stock, $weight)");
-        $totalProducts++;
+    if ($name === '' || $price <= 0 || $categoryPath === '') {
+        $stats['skipped']++;
+        $stats['errors'][] = "Рядок {$i}: пропущено (немає назви, ціни або категорії), SKU={$sku}";
+        continue;
+    }
+
+    $categoryId = resolveCategoryPath($mysqli, $categoryPath, $categoryCache, $nextCategoryId, $stats);
+    $availability = isAvailable($availabilityText) ? 1 : 0;
+    $quantity = $availability ? 1 : 0;
+
+    $existing = findProduct($mysqli, $sku);
+
+    if ($existing === null) {
+        insertProduct($mysqli, $sku, $name, $description, $price, $categoryId, $availability, $quantity);
+        $stats['products_added']++;
     } else {
-        // Если товар есть в базе, проверяем обновления
-        $existingProduct = $result->fetch_assoc();
-        
-        // Обновление товара, если цена или количество изменились
-        if ($existingProduct['price'] != $price || $existingProduct['quantity_in_stock'] != $quantity_in_stock) {
-            $mysqli->query("UPDATE products 
-                            SET price = $price, quantity_in_stock = $quantity_in_stock, weight = $weight 
-                            WHERE id = '$product_id'");
-            $updatedProducts++; // Увеличиваем счетчик обновленных товаров
+        updateProduct($mysqli, $sku, $name, $description, $price, $categoryId, $availability, $quantity);
+        if (
+            (float) $existing['price'] !== $price ||
+            (int) $existing['quantity_in_stock'] !== $quantity ||
+            (int) $existing['category_id'] !== $categoryId
+        ) {
+            $stats['products_updated']++;
         }
     }
 
-    // Вставка изображений
-    if (isset($offer->picture)) {
-        // Вставляем все картинки для товара
-        foreach ($offer->picture as $image) {
-            $imageUrl = $mysqli->real_escape_string((string)$image);
-            $mysqli->query("INSERT INTO product_images (product_id, image) VALUES ('$product_id', '$imageUrl')");
-        }
+    $imagesAdded = syncProductImages($mysqli, $sku, $mainImage, $extraImages);
+    $stats['images_added'] += $imagesAdded;
+
+    if ($mainImage !== '') {
+        setCategoryImageIfEmpty($mysqli, $categoryId, $mainImage);
     }
 }
 
 $mysqli->close();
 
-// Выводим статистику
-echo "Общее количество товаров: " . count($xml->shop->offers->offer) . "<br>";
-echo "Добавлено в базу: " . $totalProducts . "<br>";
-echo "Обновлено товаров: " . $updatedProducts . "<br>";
-echo "Категории и товары обновлены!";
-?>
+echo '<h2>Імпорт завершено</h2>';
+echo '<ul>';
+echo '<li>Рядків у файлі: ' . $stats['total_rows'] . '</li>';
+echo '<li>Категорій створено: ' . $stats['categories_created'] . '</li>';
+echo '<li>Товарів додано: ' . $stats['products_added'] . '</li>';
+echo '<li>Товарів оновлено: ' . $stats['products_updated'] . '</li>';
+echo '<li>Зображень додано: ' . $stats['images_added'] . '</li>';
+echo '<li>Пропущено рядків: ' . $stats['skipped'] . '</li>';
+echo '</ul>';
+
+if ($stats['errors'] !== []) {
+    echo '<h3>Попередження (перші 20)</h3><ul>';
+    foreach (array_slice($stats['errors'], 0, 20) as $error) {
+        echo '<li>' . htmlspecialchars($error) . '</li>';
+    }
+    echo '</ul>';
+}
+
+echo '<p><a href="/course__udemy/frontend/">Перейти на сайт</a></p>';
+
+function buildColumnMap(array $headers): array
+{
+    $map = [];
+
+    foreach ($headers as $index => $header) {
+        $normalized = mb_strtolower(trim($header));
+
+        if ($header === 'SKU') {
+            $map['sku'] = $index;
+        } elseif (str_contains($normalized, 'назва') && str_contains($normalized, 'укр')) {
+            $map['name_uk'] = $index;
+        } elseif (str_contains($normalized, 'опис') && str_contains($normalized, 'укр')) {
+            $map['desc_uk'] = $index;
+        } elseif (str_contains($normalized, 'дроп') && str_contains($normalized, 'ціна')) {
+            $map['price'] = $index;
+        } elseif ($normalized === 'категорії' || $normalized === 'категории') {
+            $map['category'] = $index;
+        } elseif ($normalized === 'наявність' || $normalized === 'наличие') {
+            $map['availability'] = $index;
+        } elseif (str_contains($normalized, 'головне фото')) {
+            $map['main_image'] = $index;
+        } elseif (str_contains($normalized, 'додаткові фото') || str_contains($normalized, 'дополнительные фото')) {
+            $map['extra_images'] = $index;
+        }
+    }
+
+    $required = ['sku', 'name_uk', 'price', 'category', 'main_image'];
+    foreach ($required as $key) {
+        if (!isset($map[$key])) {
+            throw new RuntimeException("У файлі Excel не знайдено колонку: {$key}");
+        }
+    }
+
+    return $map;
+}
+
+function normalizeRow(array $row, int $expectedColumns): array
+{
+    if (count($row) >= $expectedColumns) {
+        return $row;
+    }
+
+    return array_pad($row, $expectedColumns, '');
+}
+
+function getCell(array $row, array $map, string $key): string
+{
+    if (!isset($map[$key])) {
+        return '';
+    }
+
+    return $row[$map[$key]] ?? '';
+}
+
+function parsePrice(string $value): float
+{
+    $value = str_replace(',', '.', trim($value));
+    return round((float) $value, 2);
+}
+
+function isAvailable(string $text): bool
+{
+    $text = mb_strtolower(trim($text));
+    return $text === '' || str_contains($text, 'наявн') || str_contains($text, 'налич');
+}
+
+function loadCategoryCache(mysqli $mysqli): array
+{
+    $cache = [];
+    $result = $mysqli->query('SELECT id FROM categories');
+
+    while ($row = $result->fetch_assoc()) {
+        $pathKey = buildCategoryPathKey((int) $row['id'], $mysqli);
+        if ($pathKey !== '') {
+            $cache[$pathKey] = (int) $row['id'];
+        }
+    }
+
+    return $cache;
+}
+
+function buildCategoryPathKey(int $categoryId, mysqli $mysqli): string
+{
+    $parts = [];
+    $currentId = $categoryId;
+    $guard = 0;
+
+    while ($currentId !== 0 && $guard < 20) {
+        $stmt = $mysqli->prepare('SELECT id, name, parent_id FROM categories WHERE id = ?');
+        $stmt->bind_param('i', $currentId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$row) {
+            break;
+        }
+
+        array_unshift($parts, trim($row['name']));
+        $currentId = $row['parent_id'] ? (int) $row['parent_id'] : 0;
+        $guard++;
+    }
+
+    return implode(' | ', $parts);
+}
+
+function getNextCategoryId(mysqli $mysqli, array $cache): int
+{
+    $result = $mysqli->query('SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM categories');
+    $row = $result->fetch_assoc();
+    $maxFromDb = (int) ($row['next_id'] ?? 1);
+
+    $maxFromCache = 0;
+    foreach ($cache as $id) {
+        $maxFromCache = max($maxFromCache, $id);
+    }
+
+    return max($maxFromDb, $maxFromCache + 1);
+}
+
+function resolveCategoryPath(
+    mysqli $mysqli,
+    string $categoryPath,
+    array &$cache,
+    int &$nextCategoryId,
+    array &$stats
+): int {
+    $parts = array_values(array_filter(array_map('trim', preg_split('/\s*\|\s*/u', $categoryPath) ?: [])));
+
+    if ($parts === []) {
+        throw new RuntimeException('Порожній шлях категорії');
+    }
+
+    $parentId = null;
+    $pathSoFar = '';
+    $categoryId = 0;
+
+    foreach ($parts as $part) {
+        $pathSoFar = $pathSoFar === '' ? $part : $pathSoFar . ' | ' . $part;
+
+        if (isset($cache[$pathSoFar])) {
+            $categoryId = $cache[$pathSoFar];
+            $parentId = $categoryId;
+            continue;
+        }
+
+        $categoryId = $nextCategoryId++;
+        $stmt = $mysqli->prepare('INSERT INTO categories (id, name, parent_id) VALUES (?, ?, ?)');
+        $stmt->bind_param('isi', $categoryId, $part, $parentId);
+        $stmt->execute();
+        $stmt->close();
+
+        $cache[$pathSoFar] = $categoryId;
+        $stats['categories_created']++;
+        $parentId = $categoryId;
+    }
+
+    return $categoryId;
+}
+
+function findProduct(mysqli $mysqli, string $sku): ?array
+{
+    $stmt = $mysqli->prepare('SELECT id, price, quantity_in_stock, category_id FROM products WHERE id = ?');
+    $stmt->bind_param('s', $sku);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    return $row ?: null;
+}
+
+function insertProduct(
+    mysqli $mysqli,
+    string $sku,
+    string $name,
+    string $description,
+    float $price,
+    int $categoryId,
+    int $availability,
+    int $quantity
+): void {
+    $stmt = $mysqli->prepare(
+        'INSERT INTO products (id, group_id, category_id, name, description, price, size, availability, quantity_in_stock, weight)
+         VALUES (?, NULL, ?, ?, ?, ?, NULL, ?, ?, NULL)'
+    );
+    $stmt->bind_param('sissdii', $sku, $categoryId, $name, $description, $price, $availability, $quantity);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function updateProduct(
+    mysqli $mysqli,
+    string $sku,
+    string $name,
+    string $description,
+    float $price,
+    int $categoryId,
+    int $availability,
+    int $quantity
+): void {
+    $stmt = $mysqli->prepare(
+        'UPDATE products
+         SET name = ?, description = ?, price = ?, category_id = ?, availability = ?, quantity_in_stock = ?
+         WHERE id = ?'
+    );
+    $stmt->bind_param('ssdiids', $name, $description, $price, $categoryId, $availability, $quantity, $sku);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function syncProductImages(mysqli $mysqli, string $sku, string $mainImage, string $extraImages): int
+{
+    $images = [];
+
+    if ($mainImage !== '') {
+        $images[] = $mainImage;
+    }
+
+    if ($extraImages !== '') {
+        foreach (preg_split('/\s*\|\s*/', $extraImages) ?: [] as $image) {
+            $image = trim($image);
+            if ($image !== '' && !in_array($image, $images, true)) {
+                $images[] = $image;
+            }
+        }
+    }
+
+    $stmt = $mysqli->prepare('DELETE FROM product_images WHERE product_id = ?');
+    $stmt->bind_param('s', $sku);
+    $stmt->execute();
+    $stmt->close();
+
+    if ($images === []) {
+        return 0;
+    }
+
+    $insert = $mysqli->prepare('INSERT INTO product_images (product_id, image) VALUES (?, ?)');
+    $added = 0;
+
+    foreach ($images as $image) {
+        $insert->bind_param('ss', $sku, $image);
+        $insert->execute();
+        $added++;
+    }
+
+    $insert->close();
+
+    return $added;
+}
+
+function setCategoryImageIfEmpty(mysqli $mysqli, int $categoryId, string $image): void
+{
+    $stmt = $mysqli->prepare(
+        'UPDATE categories SET image = ? WHERE id = ? AND (image IS NULL OR image = \'\')'
+    );
+    $stmt->bind_param('si', $image, $categoryId);
+    $stmt->execute();
+    $stmt->close();
+}

@@ -61,13 +61,14 @@ if ($stmt->execute()) {
     foreach ($items as $item) {
         $sql_product_name = "SELECT name FROM products WHERE id = ?";
         $stmt_product = $conn->prepare($sql_product_name);
-        $stmt_product->bind_param("i", $item['product_id']);
+        $stmt_product->bind_param("s", $item['product_id']);
         $stmt_product->execute();
         $result = $stmt_product->get_result();
-        $product_name = $result->fetch_assoc()['name'];
+        $productRow = $result->fetch_assoc();
+        $product_name = $productRow['name'] ?? ($item['name'] ?? 'Товар');
 
         $rubber = isset($item['rubber']) && $item['rubber'] ? 1 : 0;
-        $stmt_item->bind_param("iisisssi", $orderId, $item['product_id'], $product_name, $item['quantity'], $item['price'], $item['image'], $item['size'], $rubber);
+        $stmt_item->bind_param("issidssi", $orderId, $item['product_id'], $product_name, $item['quantity'], $item['price'], $item['image'], $item['size'], $rubber);
         $stmt_item->execute();
     }
 

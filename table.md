@@ -49,17 +49,20 @@ define('DB_DATABASE', 'online_shop_db');
 | `orders`         | Заказы                            |
 | `order_items`    | Товары в заказе                   |
 
-> **categories.id** — без AUTO_INCREMENT, потому что ID приходят из выгрузки MyDrop/YML.
+> **categories.id** — назначаются автоматически при импорте из Excel.
 
 ---
 
 ## После создания таблиц
 
-Импорт товаров в браузере:
+Импорт товаров из Excel `catalog_dropt_2026-07-12.xlsx`:
 
 ```
-http://localhost/course__udemy/backend/scripts/import_products.php
+http://localhost/course__udemy/backend/scripts/import_products.php?reset=1
 ```
+
+- `?reset=1` — очистить categories, products, product_images перед импортом
+- без reset — обновить существующие товары
 
 Запуск фронтенда:
 

@@ -8,3 +8,9 @@
 
 
 перепиши table.md , напиши какие нужно создать таблицы я создал новую БД
+
+Был старый скрипт http://localhost/course__udemy/backend/scripts/import_products.php
+
+http://localhost/course__udemy/backend/scripts/import_products.php это старый скрипт , мне нужно сейчас под catalog_dropt_2026-07-12.xlsx
+
+http://localhost/course__udemy/backend/scripts/import_products.php?reset=1

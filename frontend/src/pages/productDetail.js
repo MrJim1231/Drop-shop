@@ -86,7 +86,7 @@ export async function renderProductDetail(productId) {
           ${product.description ? `
             <div class="mt-8 border-t border-slate-200 pt-8">
               <h2 class="font-semibold text-slate-800 mb-3">Опис товару</h2>
-              <div class="text-sm text-slate-600 leading-relaxed prose prose-sm max-w-none">${product.description}</div>
+              <div class="text-sm text-slate-600 leading-relaxed whitespace-pre-line">${escapeHtml(stripHtml(product.description))}</div>
             </div>` : ''}
         </div>
       </div>`

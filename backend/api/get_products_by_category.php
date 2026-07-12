@@ -12,43 +12,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // Подключаем файл с подключением к базе данных
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/category_helpers.php';
 
 // Получаем category_id из GET-запроса
 $category_id = isset($_GET['category_id']) ? (int)$_GET['category_id'] : 0;
 
 if ($category_id > 0) {
-    // Получаем все подкатегории для выбранной категории
-    $subcategories_query = "SELECT id FROM categories WHERE parent_id = ?";
-    $stmt = $conn->prepare($subcategories_query);
-    $stmt->bind_param('i', $category_id);
-    $stmt->execute();
-    $subcategories_result = $stmt->get_result();
-
-    // Формируем список всех категорий, включая подкатегории
-    $all_categories = [$category_id];
-    while ($subcategory = $subcategories_result->fetch_assoc()) {
-        $all_categories[] = $subcategory['id'];
-    }
-
-    // Преобразуем массив в строку для SQL-запроса
-    $categories_list = implode(',', $all_categories);
+    $all_categories = getDescendantCategoryIds($conn, $category_id);
+    $categories_list = implode(',', array_map('intval', $all_categories));
 
     // Запрос на получение товаров для всех выбранных категорий, только с доступностью
     $query = "SELECT * FROM products WHERE category_id IN ($categories_list) AND availability = 1";
     $result = $conn->query($query);
 
     $products = [];
-    $exclude_sizes = [
-        'Бязь (Кінцева вартість буде після прорахунків індивідуальних розмірів)',
-        'Ранфорс (Кінцева вартість буде після прорахунків індивідуальних розмірів)',
-        'Сатин (Кінцева вартість буде після прорахунків індивідуальних розмірів)',
-        'Страйп сатин (Кінцева вартість буде після прорахунків індивідуальних розмірів)',
-        'Полікотон (Кінцева вартість буде після прорахунків індивідуальних розмірів)',
-        'Однотонна бязь (Кінцева вартість буде після прорахунків індивідуальних розмірів)'
-    ];
+    $exclude_sizes = [];
 
     while ($row = $result->fetch_assoc()) {
-        // Фильтруем товары, исключая те, у которых размер в списке исключенных
         if (!in_array($row['size'], $exclude_sizes)) {
             // Получаем изображения для товара
             $product_id = $row['id'];
