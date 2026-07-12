@@ -1,3 +1,2 @@
-export const API_URL = import.meta.env.DEV
-  ? '/backend/course__udemy/backend/api/'
-  : 'http://localhost/course__udemy/backend/api/'
+// Прямой URL к PHP API (CORS разрешён на бэкенде)
+export const API_URL = 'http://localhost/course__udemy/backend/api/'

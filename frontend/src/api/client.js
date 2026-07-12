@@ -26,7 +26,11 @@ async function request(endpoint, options = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(data.message || `HTTP ${response.status}`)
+    throw new Error(data.message || data.error || `HTTP ${response.status}`)
+  }
+
+  if (data && typeof data === 'object' && data.status === 'error') {
+    throw new Error(data.message || 'Помилка API')
   }
 
   return data

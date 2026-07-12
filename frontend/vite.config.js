@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/backend': {
+      '/course__udemy': {
         target: 'http://localhost',
         changeOrigin: true,
       },
