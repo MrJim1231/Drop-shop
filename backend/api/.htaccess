@@ -1,5 +1,0 @@
-# Protect .env file from direct web access
-<Files ".env">
-  Order allow,deny
-  Deny from all
-</Files>
