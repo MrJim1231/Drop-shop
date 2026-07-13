@@ -30,28 +30,21 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "https://drop-shop-front.onrender.com",
-  process.env.CLIENT_URL,
-].filter(Boolean);
-
+// CORS — allow all origins (JWT auth uses Authorization header, not cookies)
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. curl, Postman, server-to-server)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`CORS not allowed for origin: ${origin}`));
-    },
+    origin: "*",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
   })
 );
-// Handle preflight requests globally
-app.options("*", cors());
+// Respond to all OPTIONS preflight requests
+app.options("*", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  res.sendStatus(204);
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
