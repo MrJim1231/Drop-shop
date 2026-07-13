@@ -16,7 +16,12 @@ const getDescendantCategoryIds = async (categoryId) => {
 };
 
 // Helper to find the first product image in descendant categories
+const fallbackImageCache = new Map();
+
 const getCategoryImageFallback = async (categoryId, fallbackName) => {
+  if (fallbackImageCache.has(categoryId)) {
+    return fallbackImageCache.get(categoryId);
+  }
   try {
     const descendantIds = await getDescendantCategoryIds(categoryId);
     const product = await Product.findOne({
@@ -25,40 +30,57 @@ const getCategoryImageFallback = async (categoryId, fallbackName) => {
     }).select("image");
 
     if (product && product.image) {
+      fallbackImageCache.set(categoryId, product.image);
       return product.image;
     }
   } catch (error) {
     console.error("Error getting category image fallback:", error);
   }
-  return `https://placehold.co/400x300/f1f5f9/94a3b8?text=${encodeURIComponent(fallbackName)}`;
+  const defaultUrl = `https://placehold.co/400x300/f1f5f9/94a3b8?text=${encodeURIComponent(fallbackName)}`;
+  fallbackImageCache.set(categoryId, defaultUrl);
+  return defaultUrl;
 };
 
 // 🟢 Отримати дерево категорій (categories.php)
 export const getCategoriesTree = async (req, res) => {
   try {
     const roots = await Category.find({ parentId: null }).sort({ name: 1 }).lean();
-    const categories = [];
+    
+    // Batch fetch all subcategories to avoid N+1 queries
+    const rootIds = roots.map((r) => r._id);
+    const allSubcategories = await Category.find({ parentId: { $in: rootIds } })
+      .sort({ name: 1 })
+      .select("_id name parentId")
+      .lean();
 
-    for (const root of roots) {
-      const subcategories = await Category.find({ parentId: root._id }).sort({ name: 1 }).select("_id name").lean();
-      
-      const mappedSubcategories = subcategories.map((sub) => ({
+    // Map subcategories by parentId
+    const subsByParent = {};
+    allSubcategories.forEach((sub) => {
+      if (!subsByParent[sub.parentId]) {
+        subsByParent[sub.parentId] = [];
+      }
+      subsByParent[sub.parentId].push({
         id: sub._id,
         name: sub.name,
-      }));
-
-      let image = root.image;
-      if (!image) {
-        image = await getCategoryImageFallback(root._id, root.name);
-      }
-
-      categories.push({
-        id: root._id,
-        name: root.name,
-        image,
-        subcategories: mappedSubcategories,
       });
-    }
+    });
+
+    // Resolve fallbacks in parallel
+    const categories = await Promise.all(
+      roots.map(async (root) => {
+        let image = root.image;
+        if (!image) {
+          image = await getCategoryImageFallback(root._id, root.name);
+        }
+
+        return {
+          id: root._id,
+          name: root.name,
+          image,
+          subcategories: subsByParent[root._id] || [],
+        };
+      })
+    );
 
     res.json(categories);
   } catch (error) {
