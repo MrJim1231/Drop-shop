@@ -40,10 +40,19 @@ export const generateGuestUserId = (req, res) => {
 
 // 🟢 Створити замовлення
 export const createOrder = async (req, res) => {
+  console.log("Create order payload received:", JSON.stringify(req.body, null, 2));
   const { name, phone, address, email, items, totalPrice, total_price, comment, userId, user_id } = req.body;
   const finalTotalPrice = totalPrice !== undefined ? totalPrice : total_price;
 
   if (!name || !phone || !address || !email || !items || finalTotalPrice === undefined) {
+    console.log("Validation failed. Missing fields details:", {
+      name: !!name,
+      phone: !!phone,
+      address: !!address,
+      email: !!email,
+      items: !!items,
+      finalTotalPrice: finalTotalPrice !== undefined
+    });
     return res.status(400).json({ status: "error", message: "Відсутні обов'язкові дані" });
   }
 
