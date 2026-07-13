@@ -40,15 +40,16 @@ export const generateGuestUserId = (req, res) => {
 
 // 🟢 Створити замовлення
 export const createOrder = async (req, res) => {
-  const { name, phone, address, email, items, totalPrice, comment, userId } = req.body;
+  const { name, phone, address, email, items, totalPrice, total_price, comment, userId, user_id } = req.body;
+  const finalTotalPrice = totalPrice !== undefined ? totalPrice : total_price;
 
-  if (!name || !phone || !address || !email || !items || !totalPrice) {
+  if (!name || !phone || !address || !email || !items || finalTotalPrice === undefined) {
     return res.status(400).json({ status: "error", message: "Відсутні обов'язкові дані" });
   }
 
   try {
     const orderNumber = "ORD-" + crypto.randomBytes(8).toString("hex").toUpperCase();
-    const finalUserId = userId || `guest-${crypto.randomBytes(12).toString("hex")}`;
+    const finalUserId = userId || user_id || `guest-${crypto.randomBytes(12).toString("hex")}`;
 
     const orderItems = [];
     for (const item of items) {
@@ -73,7 +74,7 @@ export const createOrder = async (req, res) => {
       address,
       email,
       comment: comment || "",
-      totalPrice: parseFloat(totalPrice),
+      totalPrice: parseFloat(finalTotalPrice),
       userId: finalUserId,
       items: orderItems,
     });
