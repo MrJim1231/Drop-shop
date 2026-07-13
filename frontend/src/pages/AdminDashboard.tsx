@@ -619,11 +619,17 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               {discountSearchResults.length > 0 && (
-                <div className="space-y-2 border-b border-slate-200 dark:border-slate-800 pb-4 max-h-48 overflow-y-auto">
+                <div className="space-y-2 border-b border-slate-200 dark:border-slate-800 pb-4 max-h-64 overflow-y-auto">
                   {discountSearchResults.map((prod) => (
                     <div key={prod.id} className="flex justify-between items-center p-2 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-xl text-xs gap-3">
-                      <span className="truncate font-semibold">{prod.name} (SKU: {prod.id})</span>
-                      <div className="flex items-center gap-1.5">
+                      <img
+                        src={prod.image || "https://placehold.co/40x40/f1f5f9/94a3b8?text=?"}
+                        alt={prod.name}
+                        className="w-10 h-10 object-contain rounded-lg bg-slate-50 border border-slate-100 shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/40x40/f1f5f9/94a3b8?text=?"; }}
+                      />
+                      <span className="truncate font-semibold flex-1">{prod.name} <span className="text-slate-400 font-normal">(SKU: {prod.id})</span></span>
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <input
                           type="number"
                           min="0"
@@ -637,7 +643,7 @@ export const AdminDashboard: React.FC = () => {
                             const val = parseInt((document.getElementById(`disc-input-${prod.id}`) as HTMLInputElement)?.value) || 0;
                             handleSetDiscount(prod.id, val);
                           }}
-                          className="px-2.5 py-1 bg-indigo-650 text-white rounded text-[10px]"
+                          className="px-2.5 py-1 bg-indigo-600 text-white rounded text-[10px] hover:bg-indigo-700"
                         >
                           Оновити
                         </button>
@@ -651,11 +657,17 @@ export const AdminDashboard: React.FC = () => {
                 <h3 className="font-bold text-sm mb-3">Активні знижки на сайті ({activeDiscountedProducts.length})</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
                   {activeDiscountedProducts.map((p) => (
-                    <div key={p.id} className="flex justify-between items-center p-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-xl text-xs">
-                      <span className="truncate max-w-[220px] font-semibold">{p.name}</span>
-                      <div className="flex items-center gap-2">
+                    <div key={p.id} className="flex items-center p-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-xl text-xs gap-2">
+                      <img
+                        src={p.image || "https://placehold.co/40x40/f1f5f9/94a3b8?text=?"}
+                        alt={p.name}
+                        className="w-9 h-9 object-contain rounded-lg bg-slate-50 border border-slate-100 shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/40x40/f1f5f9/94a3b8?text=?"; }}
+                      />
+                      <span className="truncate font-semibold flex-1">{p.name}</span>
+                      <div className="flex items-center gap-2 shrink-0">
                         <span className="text-rose-600 font-bold">-{p.discount}%</span>
-                        <button onClick={() => handleSetDiscount(p.id, 0)} className="text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleSetDiscount(p.id, 0)} className="text-red-500 hover:text-red-700"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     </div>
                   ))}
