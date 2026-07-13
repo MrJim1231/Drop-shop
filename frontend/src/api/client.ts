@@ -167,7 +167,7 @@ export const api = {
     }).then(r => r.data),
 
   searchProductsAdmin: (query: string) =>
-    client.get<ProductData[]>(`/api/products.php?q=${encodeURIComponent(query)}&page=1`).then(r => r.data),
+    client.get<{ products: ProductData[]; total_pages: number }>(`/api/products.php?q=${encodeURIComponent(query)}&page=1`).then(r => r.data.products || []),
 
   getDiscountedProducts: () =>
     client.get<{ status: string; products: ProductData[] }>("/api/get_discounted_products.php").then(r => r.data),
