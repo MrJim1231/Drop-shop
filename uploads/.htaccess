@@ -1,0 +1,9 @@
+# Allow images to be served (jpg, png, webp, gif)
+# But block PHP/script execution — uploaded files must NEVER run as PHP
+<FilesMatch "\.(php|php3|php4|php5|phtml|pl|py|sh|cgi)$">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+# Optional: disable directory listing
+Options -Indexes
