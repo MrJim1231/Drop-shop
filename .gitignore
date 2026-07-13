@@ -31,6 +31,12 @@ dist-ssr
 *.sln
 *.sw?
 
-#Composer
+# Composer
 /backend/vendor/
 .env
+
+# Uploads
+/uploads/*
+!/uploads/.gitkeep
+/backend/uploads/*
+!/backend/uploads/.gitkeep
