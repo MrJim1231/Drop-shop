@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// Standard API URL (proxied by Vite)
-const API_URL = "";
+// Standard API URL (reads from environment variables in production, or uses proxy in development)
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 const client = axios.create({
   baseURL: API_URL,

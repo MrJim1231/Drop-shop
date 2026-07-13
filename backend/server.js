@@ -109,6 +109,16 @@ app.get("/backend/scripts/import_xml.php", (req, res, next) => {
   next();
 }, impCtrl.importXml);
 
+// Serve frontend static build files if they exist
+const frontendDist = path.join(__dirname, "../frontend/dist");
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  // SPA routing fallback
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
+}
+
 // Serve server port
 app.listen(PORT, () => {
   console.log(`🚀 Node Server running on port ${PORT}`);
